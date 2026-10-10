@@ -6,6 +6,15 @@ Aplikace poskytuje strukturované sledování tréninkového pokroku, výpočet 
 
 ---
 
+## Použité technologie
+
+* **Frontend:** Flutter (Dart)
+* **State Management:** Riverpod
+* **Backend & Databáze:** Supabase (PostgreSQL)
+* **Lokální uložení (Offline režim):** Isar / Hive
+
+---
+
 ## Klíčové funkce
 
 ### 1. Zaznamenávání tréninků
