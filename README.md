@@ -1,8 +1,8 @@
 # AlphaLift
 
-AlphaLift je pokročilá fitness aplikace pro iOS a Android, která kombinuje efektivní zaznamenávání tréninků (po vzoru aplikace Hevy) s podrobnou svalově-orientovanou gamifikací a systémem ranků (po vzoru aplikace Symmetry).
+AlphaLift je pokročilá fitness aplikace pro iOS a Android, která kombinuje efektivní zaznamenávání tréninků s podrobným svalově-orientovaným systémem ranků.
 
-Aplikace poskytuje strukturované sledování tréninkového pokroku, výpočet relativní síly vzhledem k tělesné hmotnosti a sdílení výkonů v rámci sociálního feedu.
+Aplikace poskytuje strukturované sledování tréninkového pokroku, výpočet relativní síly vzhledem k tělesné hmotnosti a sdílení výkonů s přáteli.
 
 ---
 
