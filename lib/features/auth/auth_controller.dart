@@ -3,7 +3,13 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-enum AppAuthStatus { loading, signedOut, needsUsername, ready }
+enum AppAuthStatus {
+  loading,
+  signedOut,
+  needsUsername,
+  needsWeight,
+  ready,
+}
 
 final authControllerProvider =
     NotifierProvider<AuthController, AppAuthStatus>(AuthController.new);
@@ -37,10 +43,16 @@ class AuthController extends Notifier<AppAuthStatus> {
     try {
       final row = await _client
           .from('users')
-          .select('username')
+          .select('username, body_weight_kg')
           .eq('id', session.user.id)
           .maybeSingle();
-      state = row == null ? AppAuthStatus.needsUsername : AppAuthStatus.ready;
+      if (row == null) {
+        state = AppAuthStatus.needsUsername;
+      } else if (row['body_weight_kg'] == null) {
+        state = AppAuthStatus.needsWeight;
+      } else {
+        state = AppAuthStatus.ready;
+      }
     } catch (_) {
       state = AppAuthStatus.needsUsername;
     }
@@ -106,6 +118,26 @@ class AuthController extends Notifier<AppAuthStatus> {
       return e.message;
     } catch (_) {
       return 'Could not save username. Please try again.';
+    }
+  }
+
+  Future<String?> saveBodyWeight(double weightKg) async {
+    final session = _client.auth.currentSession;
+    if (session == null) return 'Not signed in.';
+    if (weightKg < 30 || weightKg > 300) {
+      return 'Weight must be between 30 and 300 kg.';
+    }
+    try {
+      await _client
+          .from('users')
+          .update({'body_weight_kg': weightKg})
+          .eq('id', session.user.id);
+      await refresh();
+      return null;
+    } on PostgrestException catch (e) {
+      return e.message;
+    } catch (_) {
+      return 'Could not save weight. Please try again.';
     }
   }
 

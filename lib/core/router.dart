@@ -10,9 +10,11 @@ import '../features/auth/reset_password_screen.dart';
 import '../features/auth/signup_screen.dart';
 import '../features/home/home_screen.dart';
 import '../features/onboarding/username_screen.dart';
+import '../features/onboarding/weight_screen.dart';
 import '../features/profile/profile_screen.dart';
 import '../features/rank/rank_screen.dart';
 import '../features/shell/home_shell.dart';
+import '../features/workout/active_workout_screen.dart';
 import '../features/workout/workout_screen.dart';
 
 class GoRouterRefreshStream extends ChangeNotifier {
@@ -30,6 +32,7 @@ class GoRouterRefreshStream extends ChangeNotifier {
 }
 
 const _authLocations = ['/login', '/signup', '/reset-password'];
+const _onboardingLocations = ['/onboarding', '/onboarding-weight'];
 
 final routerProvider = Provider<GoRouter>((ref) {
   final controller = ref.read(authControllerProvider.notifier);
@@ -48,9 +51,11 @@ final routerProvider = Provider<GoRouter>((ref) {
           return _authLocations.contains(location) ? null : '/login';
         case AppAuthStatus.needsUsername:
           return location == '/onboarding' ? null : '/onboarding';
+        case AppAuthStatus.needsWeight:
+          return location == '/onboarding-weight' ? null : '/onboarding-weight';
         case AppAuthStatus.ready:
           if (_authLocations.contains(location) ||
-              location == '/onboarding' ||
+              _onboardingLocations.contains(location) ||
               location == '/splash') {
             return '/home';
           }
@@ -69,6 +74,10 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/onboarding',
         builder: (_, _) => const UsernameScreen(),
       ),
+      GoRoute(
+        path: '/onboarding-weight',
+        builder: (_, _) => const WeightScreen(),
+      ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) =>
             HomeShell(navigationShell: navigationShell),
@@ -80,6 +89,12 @@ final routerProvider = Provider<GoRouter>((ref) {
             GoRoute(
               path: '/workout',
               builder: (_, _) => const WorkoutScreen(),
+              routes: [
+                GoRoute(
+                  path: 'active',
+                  builder: (_, _) => const ActiveWorkoutScreen(),
+                ),
+              ],
             ),
           ]),
           StatefulShellBranch(routes: [
