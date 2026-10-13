@@ -13,8 +13,10 @@ import '../features/onboarding/username_screen.dart';
 import '../features/onboarding/weight_screen.dart';
 import '../features/profile/profile_screen.dart';
 import '../features/rank/rank_screen.dart';
+import '../features/routines/routine_builder_screen.dart';
 import '../features/shell/home_shell.dart';
 import '../features/workout/active_workout_screen.dart';
+import '../features/workout/workout_detail_screen.dart';
 import '../features/workout/workout_screen.dart';
 
 class GoRouterRefreshStream extends ChangeNotifier {
@@ -77,6 +79,19 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/onboarding-weight',
         builder: (_, _) => const WeightScreen(),
+      ),
+      GoRoute(
+        path: '/history/:id',
+        builder: (_, state) => WorkoutDetailScreen(
+          workoutId: state.pathParameters['id']!,
+        ),
+      ),
+      GoRoute(
+        path: '/routine-builder',
+        builder: (_, state) => RoutineBuilderScreen(
+          routineId: state.uri.queryParameters['id'],
+          initialName: state.uri.queryParameters['name'],
+        ),
       ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) =>
