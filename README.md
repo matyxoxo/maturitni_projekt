@@ -60,7 +60,7 @@ Tato hierarchie umožňuje efektivní vyhledávání cviků podle názvu i podle
 
 ### ER Diagram Databáze
 
-<img width="1252" height="727" alt="Snímek obrazovky 2026-10-19 200443" src="https://github.com/user-attachments/assets/e81cbab7-237d-4267-8b0e-5c4a65e3d1d4" />
+<img width="1222" height="730" alt="Snímek obrazovky 2026-10-19 205646" src="https://github.com/user-attachments/assets/e51f52a1-0ac1-4f3e-9deb-ca6d10344d06" />
 
 *Odkaz na schéma:* [Zobrazit diagram na dbdiagram.io](https://dbdiagram.io/d/6aca23c250a8c6fc361b8a12)
 
