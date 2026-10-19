@@ -60,7 +60,7 @@ Tato hierarchie umožňuje efektivní vyhledávání cviků podle názvu i podle
 
 ### ER Diagram Databáze
 
-<img width="1572" height="992" alt="alphalift_diagram" src="https://github.com/user-attachments/assets/a827530d-dc04-4452-ac1e-e76e2f012d93" />
+<img width="1252" height="727" alt="Snímek obrazovky 2026-10-19 200443" src="https://github.com/user-attachments/assets/e81cbab7-237d-4267-8b0e-5c4a65e3d1d4" />
 
 *Odkaz na schéma:* [Zobrazit diagram na dbdiagram.io](https://dbdiagram.io/d/6aca23c250a8c6fc361b8a12)
 
