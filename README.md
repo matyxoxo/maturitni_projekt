@@ -79,7 +79,7 @@ Tato hierarchie umožňuje efektivní vyhledávání cviků podle názvu i podle
 
 3. **Šablony tréninků (Routines)**
    * `routines`: Uživatelské tréninkové plány.
-   * `routine_exercises`: Cviky zařazené do dané šablony (s pořadím).
+   * `routine_exercises`: Cviky zařazené do dané šablony (s pořadím a cílovým časem odpočinku mezi sériemi – `rest_time_seconds`).
    * `routine_sets`: Cílové hodnoty sérií v šabloně – váha, opakování, typ série (`set_type`) a případně čas (`duration_seconds`) či vzdálenost (`distance_meters`) pro intervalové/kardio cviky.
 
 4. **Historie a záznam tréninků (Workouts)**

@@ -29,10 +29,12 @@ class RoutineExerciseDraft {
   RoutineExerciseDraft({
     required this.exercise,
     List<RoutineSetTarget>? targets,
+    this.restTimeSeconds,
   }) : targets = targets ?? [];
 
   final Exercise exercise;
   final List<RoutineSetTarget> targets;
+  int? restTimeSeconds;
 }
 
 /// Ulozena rutina (seznam cviku bez detailu serii).
@@ -83,6 +85,7 @@ Future<List<RoutineExerciseDraft>> _loadRoutineDetail(String routineId) async {
       .from('routine_exercises')
       .select('''
         order_index,
+        rest_time_seconds,
         exercises (
           exercise_id, exercise_name, exercise_type, equipment,
           exercise_icon_url,
@@ -106,6 +109,7 @@ Future<List<RoutineExerciseDraft>> _loadRoutineDetail(String routineId) async {
     result.add(
       RoutineExerciseDraft(
         exercise: Exercise.fromRow(exRow),
+        restTimeSeconds: row['rest_time_seconds'] as int?,
         targets: [
           for (final set in sets)
             RoutineSetTarget(
@@ -190,6 +194,7 @@ Future<void> _saveRoutineExercise(
         'routine_id': routineId,
         'exercise_id': draft.exercise.id,
         'order_index': orderIndex,
+        'rest_time_seconds': draft.restTimeSeconds,
       })
       .select('routine_exercise_id')
       .single();

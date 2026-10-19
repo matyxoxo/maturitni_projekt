@@ -206,6 +206,9 @@ class _RoutineBuilderScreenState extends ConsumerState<RoutineBuilderScreen> {
                 _changeSetType(i, setIndex, setType),
             onRemoveSet: (setIndex) => _removeSet(i, setIndex),
             onRemoveExercise: () => _removeExercise(i),
+            onChangeRestTime: (seconds) => setState(
+              () => _exercises[i].restTimeSeconds = seconds,
+            ),
           ),
         const SizedBox(height: 8),
         FilledButton.icon(
@@ -233,6 +236,7 @@ class _ExerciseDraftCard extends StatelessWidget {
     required this.onChangeSetType,
     required this.onRemoveSet,
     required this.onRemoveExercise,
+    required this.onChangeRestTime,
   });
 
   final RoutineExerciseDraft draft;
@@ -241,6 +245,7 @@ class _ExerciseDraftCard extends StatelessWidget {
   final void Function(int setIndex, String setType) onChangeSetType;
   final ValueChanged<int> onRemoveSet;
   final VoidCallback onRemoveExercise;
+  final ValueChanged<int?> onChangeRestTime;
 
   @override
   Widget build(BuildContext context) {
@@ -269,6 +274,10 @@ class _ExerciseDraftCard extends StatelessWidget {
                 ),
               ],
             ),
+            _RestTimeRow(
+              value: draft.restTimeSeconds,
+              onChanged: onChangeRestTime,
+            ),
             const Divider(),
             SetTableHeader(config: config),
             for (var s = 0; s < draft.targets.length; s++)
@@ -291,6 +300,61 @@ class _ExerciseDraftCard extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+// ============================================================
+//  Radek odpocinku v builderu
+// ============================================================
+
+/// Radek pro zadani ciloveho odpocinku mezi serii (v sekundach).
+class _RestTimeRow extends StatelessWidget {
+  const _RestTimeRow({required this.value, required this.onChanged});
+
+  final int? value;
+  final ValueChanged<int?> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final controller = TextEditingController(
+      text: value != null && value! > 0 ? '${value! ~/ 60}' : '',
+    );
+    return Padding(
+      padding: const EdgeInsets.only(top: 4),
+      child: Row(
+        children: [
+          Icon(Icons.timer_outlined, size: 18, color: Colors.grey.shade500),
+          const SizedBox(width: 8),
+          Text(
+            'Rest between sets',
+            style: TextStyle(fontSize: 13, color: Colors.grey.shade400),
+          ),
+          const Spacer(),
+          SizedBox(
+            width: 56,
+            child: TextField(
+              controller: controller,
+              keyboardType: TextInputType.number,
+              onChanged: (text) {
+                final minutes = int.tryParse(text);
+                onChanged(minutes != null && minutes > 0 ? minutes * 60 : null);
+              },
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 13),
+              decoration: const InputDecoration(
+                isDense: true,
+                hintText: 'min',
+                hintStyle: TextStyle(fontSize: 12),
+                contentPadding:
+                    EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+                suffixText: 'min',
+                suffixStyle: TextStyle(fontSize: 12),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
