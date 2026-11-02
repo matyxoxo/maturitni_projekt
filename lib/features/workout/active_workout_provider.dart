@@ -288,7 +288,6 @@ class ActiveWorkoutController extends Notifier<ActiveWorkout> {
         userId,
         title,
         duration,
-        state.totalVolume,
       );
 
       for (var i = 0; i < state.exercises.length; i++) {
@@ -311,7 +310,6 @@ class ActiveWorkoutController extends Notifier<ActiveWorkout> {
     String userId,
     String title,
     int durationSeconds,
-    double totalVolume,
   ) async {
     final row = await client
         .from('workouts')
@@ -319,7 +317,6 @@ class ActiveWorkoutController extends Notifier<ActiveWorkout> {
           'user_id': userId,
           'workout_title': title,
           'duration_seconds': durationSeconds,
-          'total_volume_kg': totalVolume,
         })
         .select('workout_id')
         .single();

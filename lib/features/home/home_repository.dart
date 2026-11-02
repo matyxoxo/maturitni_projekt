@@ -35,7 +35,9 @@ class WorkoutSummary {
   final String title;
   final DateTime createdAt;
   final int? durationSeconds;
-  final double? totalVolumeKg;
+
+  /// Vypocteno v Dartu z workout_sets (neni ulozeno v DB).
+  final double totalVolumeKg;
   final String username;
   final String? profilePhotoUrl;
   final List<WorkoutExerciseBrief> exercises;
@@ -48,21 +50,32 @@ class WorkoutSummary {
           ..sort((a, b) =>
               (a['order_index'] as int? ?? 0)
                   .compareTo(b['order_index'] as int? ?? 0));
-    final exercises = [
-      for (final ex in exerciseRows)
-        if (ex['exercises'] != null)
+    final exercises = <WorkoutExerciseBrief>[];
+    var volume = 0.0;
+    for (final ex in exerciseRows) {
+      if (ex['exercises'] != null) {
+        exercises.add(
           WorkoutExerciseBrief(
             exerciseId: ex['exercises']['exercise_id'] as String,
             name: ex['exercises']['exercise_name'] as String,
             gifUrl: ex['exercises']['exercise_icon_url'] as String?,
           ),
-    ];
+        );
+      }
+      for (final set
+          in (ex['workout_sets'] as List<dynamic>? ?? [])
+              .cast<Map<String, dynamic>>()) {
+        final weight = (set['weight_kg'] as num?)?.toDouble() ?? 0;
+        final reps = set['reps_count'] as int? ?? 0;
+        volume += weight * reps;
+      }
+    }
     return WorkoutSummary(
       workoutId: row['workout_id'] as String,
       title: row['workout_title'] as String,
       createdAt: DateTime.parse(row['created_at'] as String),
       durationSeconds: row['duration_seconds'] as int?,
-      totalVolumeKg: (row['total_volume_kg'] as num?)?.toDouble(),
+      totalVolumeKg: volume,
       username: user?['username'] as String? ?? 'Unknown',
       profilePhotoUrl: user?['profile_photo_url'] as String?,
       exercises: exercises,
@@ -76,11 +89,11 @@ final myWorkoutsProvider = FutureProvider<List<WorkoutSummary>>((ref) async {
   if (userId == null) return [];
   final rows = await Supabase.instance.client.from('workouts').select('''
         workout_id, workout_title, created_at, duration_seconds,
-        total_volume_kg,
         users (username, profile_photo_url),
         workout_exercises (
           order_index,
-          exercises (exercise_id, exercise_name, exercise_icon_url)
+          exercises (exercise_id, exercise_name, exercise_icon_url),
+          workout_sets (weight_kg, reps_count)
         )
       ''').eq('user_id', userId).order('created_at', ascending: false).limit(50);
   return rows.map(WorkoutSummary.fromRow).toList();
@@ -147,7 +160,6 @@ class WorkoutDetail {
     required this.title,
     required this.createdAt,
     required this.durationSeconds,
-    required this.totalVolumeKg,
     required this.username,
     required this.profilePhotoUrl,
     required this.exercises,
@@ -157,10 +169,20 @@ class WorkoutDetail {
   final String title;
   final DateTime createdAt;
   final int? durationSeconds;
-  final double? totalVolumeKg;
   final String username;
   final String? profilePhotoUrl;
   final List<WorkoutDetailExercise> exercises;
+
+  /// Vypocteno v Dartu z workout_sets (neni ulozeno v DB).
+  double get totalVolumeKg {
+    var volume = 0.0;
+    for (final exercise in exercises) {
+      for (final set in exercise.sets) {
+        volume += (set.weightKg ?? 0) * (set.repsCount ?? 0);
+      }
+    }
+    return volume;
+  }
 
   factory WorkoutDetail.fromRow(Map<String, dynamic> row) {
     final user = row['users'] as Map<String, dynamic>?;
@@ -189,7 +211,6 @@ class WorkoutDetail {
       title: row['workout_title'] as String,
       createdAt: DateTime.parse(row['created_at'] as String),
       durationSeconds: row['duration_seconds'] as int?,
-      totalVolumeKg: (row['total_volume_kg'] as num?)?.toDouble(),
       username: user?['username'] as String? ?? 'Unknown',
       profilePhotoUrl: user?['profile_photo_url'] as String?,
       exercises: exercises,
@@ -204,7 +225,6 @@ final workoutDetailProvider =
       .from('workouts')
       .select('''
         workout_id, workout_title, created_at, duration_seconds,
-        total_volume_kg,
         users (username, profile_photo_url),
         workout_exercises (
           order_index,

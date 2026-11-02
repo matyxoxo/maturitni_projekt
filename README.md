@@ -83,7 +83,7 @@ Tato hierarchie umožňuje efektivní vyhledávání cviků podle názvu i podle
    * `routine_sets`: Cílové hodnoty sérií v šabloně – váha, opakování, typ série (`set_type`) a případně čas (`duration_seconds`) či vzdálenost (`distance_meters`) pro intervalové/kardio cviky.
 
 4. **Historie a záznam tréninků (Workouts)**
-   * `workouts`: Záznam o proběhlém tréninku (název, trvání, celkový objem, případný odkaz na šablonu, ze které vznikl).
+   * `workouts`: Záznam o proběhlém tréninku (název, trvání, případný odkaz na šablonu, ze které vznikl). Celkový objem se nepředpočítává v DB, ale počítá se z jednotlivých sérií.
    * `workout_exercises`: Cviky odcvičené v konkrétním tréninku.
    * `workout_sets`: Detailní data jednotlivých sérií (váha, opakování, trvání, vzdálenost, typ série, stav splnění).
 
@@ -92,4 +92,4 @@ Tato hierarchie umožňuje efektivní vyhledávání cviků podle názvu i podle
    * `workout_comments`: Komentáře k tréninkům.
 
 6. **Rank**
-   * `user_ranks`: Dosáhnutý rank uživatele na úrovni cviku, svalové podskupiny nebo hlavní svalové skupiny. Místo polymorfního `entity_id` používá tři samostatné cizí klíče (`exercise_id`, `sub_muscle_id`, `muscle_group_id`), z nichž je vždy přesně jeden vyplněný – díky tomu databáze hlídá integritu dat.
+   * `user_ranks`: Dosáhnutý rank uživatele na úrovni cviku, svalové podskupiny nebo hlavní svalové skupiny. Místo polymorfního `entity_id` používá tři samostatné cizí klíče (`exercise_id`, `sub_muscle_id`, `muscle_group_id`), z nichž je vždy přesně jeden vyplněný – díky tomu databáze hlídá integritu dat. Skóre a úroveň ranku se nepředpočítávají v DB, ale odvozují se při výpočtu ranků.
