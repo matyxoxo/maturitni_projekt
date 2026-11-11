@@ -59,31 +59,52 @@ class WorkoutDetailScreen extends ConsumerWidget {
             const SizedBox(height: 16),
             Text(
               detail.title,
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              style: const TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w800,
+                letterSpacing: -0.3,
+              ),
             ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Icon(
-                  Icons.timer_outlined,
-                  size: 16,
-                  color: Colors.grey.shade400,
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  detail.durationSeconds != null
-                      ? formatDuration(detail.durationSeconds!)
-                      : '--:--',
-                  style: TextStyle(color: Colors.grey.shade400),
-                ),
-                const SizedBox(width: 16),
-                Icon(Icons.fitness_center, size: 16, color: Colors.grey.shade400),
-                const SizedBox(width: 4),
-                Text(
-                  formatVolume(detail.totalVolumeKg),
-                  style: TextStyle(color: Colors.grey.shade400),
-                ),
-              ],
+            const SizedBox(height: 10),
+            Builder(
+              builder: (ctx) {
+                final scheme = Theme.of(ctx).colorScheme;
+                return Row(
+                  children: [
+                    Icon(
+                      Icons.timer_outlined,
+                      size: 18,
+                      color: scheme.primary,
+                    ),
+                    const SizedBox(width: 5),
+                    Text(
+                      detail.durationSeconds != null
+                          ? formatDuration(detail.durationSeconds!)
+                          : '--:--',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: scheme.onSurface,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Icon(
+                      Icons.fitness_center,
+                      size: 18,
+                      color: scheme.primary,
+                    ),
+                    const SizedBox(width: 5),
+                    Text(
+                      formatVolume(detail.totalVolumeKg),
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: scheme.onSurface,
+                      ),
+                    ),
+                  ],
+                );
+              },
             ),
             const SizedBox(height: 16),
             const Divider(),
@@ -213,7 +234,9 @@ class _SetDetailRow extends StatelessWidget {
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  border: Border.all(color: Colors.grey.shade600),
+                  border: Border.all(
+                    color: Theme.of(context).colorScheme.outline,
+                  ),
                 ),
                 child: Text(
                   _setTypeLabels[set.setType] ?? '${set.setNumber}',
@@ -232,7 +255,10 @@ class _SetDetailRow extends StatelessWidget {
               child: Center(
                 child: Text(
                   set.weightKg != null ? '${set.weightKg}' : '–',
-                  style: const TextStyle(fontSize: 14),
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ),
@@ -242,7 +268,10 @@ class _SetDetailRow extends StatelessWidget {
               child: Center(
                 child: Text(
                   set.repsCount != null ? '${set.repsCount}' : '–',
-                  style: const TextStyle(fontSize: 14),
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ),
@@ -254,7 +283,10 @@ class _SetDetailRow extends StatelessWidget {
                   set.durationSeconds != null
                       ? '${set.durationSeconds}s'
                       : '–',
-                  style: const TextStyle(fontSize: 14),
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ),
@@ -266,7 +298,10 @@ class _SetDetailRow extends StatelessWidget {
                   set.distanceMeters != null
                       ? '${set.distanceMeters}m'
                       : '–',
-                  style: const TextStyle(fontSize: 14),
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ),
@@ -279,7 +314,7 @@ class _SetDetailRow extends StatelessWidget {
                   : Icons.check_circle_outline,
               size: 22,
               color: set.isCompleted
-                  ? Colors.green.shade300
+                  ? Theme.of(context).colorScheme.primary
                   : Colors.grey.shade700,
             ),
           ),

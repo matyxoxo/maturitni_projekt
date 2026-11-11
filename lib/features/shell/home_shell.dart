@@ -110,13 +110,16 @@ class _MinimizedWorkoutBar extends ConsumerWidget {
               Icon(
                 Icons.fitness_center,
                 size: 18,
-                color: Colors.grey.shade400,
+                color: Theme.of(context).colorScheme.primary,
               ),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   'Workout running • ${formatDuration(elapsedSeconds)}',
-                  style: const TextStyle(fontSize: 13),
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),

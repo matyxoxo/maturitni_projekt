@@ -16,7 +16,7 @@ class WorkoutStatsBar extends ConsumerWidget {
     final elapsedSeconds = now.difference(workout.startedAt).inSeconds;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
       child: Row(
         children: [
           _StatItem(
@@ -48,14 +48,20 @@ class _StatItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 16, color: Colors.grey.shade400),
-        const SizedBox(width: 4),
+        Icon(icon, size: 18, color: scheme.primary),
+        const SizedBox(width: 5),
         Text(
           label,
-          style: TextStyle(fontSize: 13, color: Colors.grey.shade400),
+          style: TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w700,
+            letterSpacing: -0.2,
+            color: scheme.onSurface,
+          ),
         ),
       ],
     );

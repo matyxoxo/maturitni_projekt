@@ -142,11 +142,12 @@ class _WorkoutCard extends ConsumerWidget {
               Text(
                 workout.title,
                 style: const TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: -0.2,
                 ),
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: 8),
               _CardStats(
                 durationSeconds: workout.durationSeconds,
                 totalVolumeKg: workout.totalVolumeKg,
@@ -318,7 +319,7 @@ class _CardStats extends StatelessWidget {
               ? formatDuration(durationSeconds!)
               : '--:--',
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: 16),
         _StatChip(
           icon: Icons.fitness_center,
           label: formatVolume(totalVolumeKg),
@@ -337,14 +338,19 @@ class _StatChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 16, color: Colors.grey.shade400),
-        const SizedBox(width: 4),
+        Icon(icon, size: 17, color: scheme.primary),
+        const SizedBox(width: 5),
         Text(
           label,
-          style: TextStyle(fontSize: 13, color: Colors.grey.shade400),
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: Colors.grey.shade300,
+          ),
         ),
       ],
     );

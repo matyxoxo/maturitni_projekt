@@ -1,6 +1,8 @@
 import 'dart:async';
 
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 enum AppAuthStatus {
@@ -17,6 +19,7 @@ final authControllerProvider =
 class AuthController extends Notifier<AppAuthStatus> {
   final _changes = StreamController<void>.broadcast();
   Stream<void> get changes => _changes.stream;
+  static bool _googleInitialized = false;
 
   SupabaseClient get _client => Supabase.instance.client;
 
@@ -68,6 +71,47 @@ class AuthController extends Notifier<AppAuthStatus> {
       return e.message;
     } catch (_) {
       return 'Unexpected error. Please try again.';
+    }
+  }
+
+  Future<String?> signInWithGoogle() async {
+    try {
+      final webClientId = dotenv.env['GOOGLE_WEB_CLIENT_ID'];
+      if (webClientId == null || webClientId.isEmpty) {
+        return 'Google sign-in is not configured.';
+      }
+
+      final googleSignIn = GoogleSignIn.instance;
+      if (!_googleInitialized) {
+        await googleSignIn.initialize(serverClientId: webClientId);
+        _googleInitialized = true;
+      }
+
+      final googleUser = await googleSignIn.authenticate();
+      const scopes = ['email', 'profile'];
+      final authorization = await googleUser.authorizationClient
+              .authorizationForScopes(scopes) ??
+          await googleUser.authorizationClient.authorizeScopes(scopes);
+
+      final idToken = googleUser.authentication.idToken;
+      if (idToken == null) {
+        return 'Could not get Google credentials. Please try again.';
+      }
+
+      await _client.auth.signInWithIdToken(
+        provider: OAuthProvider.google,
+        idToken: idToken,
+        accessToken: authorization.accessToken,
+      );
+      await refresh();
+      return null;
+    } on GoogleSignInException catch (e) {
+      if (e.code == GoogleSignInExceptionCode.canceled) return null;
+      return 'Google sign-in failed. Please try again.';
+    } on AuthException catch (e) {
+      return e.message;
+    } catch (_) {
+      return 'Google sign-in failed. Please try again.';
     }
   }
 

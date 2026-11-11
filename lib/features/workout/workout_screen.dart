@@ -86,7 +86,11 @@ class WorkoutScreen extends ConsumerWidget {
           const SizedBox(height: 24),
           const Text(
             'My routines',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              fontSize: 19,
+              fontWeight: FontWeight.w800,
+              letterSpacing: -0.2,
+            ),
           ),
           const SizedBox(height: 8),
           routinesAsync.when(

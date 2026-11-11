@@ -122,14 +122,18 @@ class _SetInputRowState extends ConsumerState<SetInputRow> {
         .id;
     final previousLabel = previous?[exerciseId]?[_setNumber] ?? '';
 
+    final scheme = Theme.of(context).colorScheme;
     final inputStyle = TextStyle(
-      fontSize: 14,
-      color: set.isCompleted ? Colors.white : null,
+      fontSize: 16,
+      fontWeight: FontWeight.w600,
+      color: set.isCompleted ? Colors.white : scheme.onSurface,
     );
 
     return Container(
-      color: set.isCompleted ? Colors.green.withValues(alpha: 0.3) : null,
-      padding: const EdgeInsets.symmetric(vertical: 2),
+      color: set.isCompleted
+          ? scheme.primary.withValues(alpha: 0.1)
+          : null,
+      padding: const EdgeInsets.symmetric(vertical: 3),
       child: Row(
         children: [
           _buildSetCircle(set.setType),
@@ -183,7 +187,7 @@ class _SetInputRowState extends ConsumerState<SetInputRow> {
             alignment: Alignment.center,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              border: Border.all(color: Colors.grey.shade600),
+              border: Border.all(color: Theme.of(context).colorScheme.outline),
             ),
             child: Text(
               SetType.indicator(setType, _setNumber),
@@ -232,7 +236,7 @@ class _SetInputRowState extends ConsumerState<SetInputRow> {
           hintText: hint,
           hintStyle: const TextStyle(fontSize: 13),
           contentPadding:
-              const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
+              const EdgeInsets.symmetric(horizontal: 6, vertical: 10),
           border: InputBorder.none,
         ),
       ),
@@ -246,8 +250,10 @@ class _SetInputRowState extends ConsumerState<SetInputRow> {
         padding: EdgeInsets.zero,
         icon: Icon(
           Icons.check_circle_outline,
-          size: 22,
-          color: isCompleted ? Colors.green.shade300 : Colors.grey.shade600,
+          size: 24,
+          color: isCompleted
+              ? Theme.of(context).colorScheme.primary
+              : Colors.grey.shade600,
         ),
         onPressed: _toggleComplete,
       ),

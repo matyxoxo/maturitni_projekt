@@ -52,7 +52,11 @@ class _WeightScreenState extends ConsumerState<WeightScreen> {
               children: [
                 const Text(
                   'What is your body weight?',
-                  style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontSize: 30,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.5,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 Text(

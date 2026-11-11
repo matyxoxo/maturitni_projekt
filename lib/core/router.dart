@@ -8,13 +8,17 @@ import '../features/auth/auth_controller.dart';
 import '../features/auth/login_screen.dart';
 import '../features/auth/reset_password_screen.dart';
 import '../features/auth/signup_screen.dart';
+import '../features/exercises/exercise_browser_screen.dart';
 import '../features/home/home_screen.dart';
 import '../features/onboarding/username_screen.dart';
 import '../features/onboarding/weight_screen.dart';
+import '../features/profile/edit_profile_screen.dart';
 import '../features/profile/profile_screen.dart';
+import '../features/profile/settings_screen.dart';
 import '../features/rank/rank_screen.dart';
 import '../features/routines/routine_builder_screen.dart';
 import '../features/shell/home_shell.dart';
+import '../features/social/find_friends_screen.dart';
 import '../features/workout/active_workout_screen.dart';
 import '../features/workout/workout_detail_screen.dart';
 import '../features/workout/workout_screen.dart';
@@ -92,6 +96,22 @@ final routerProvider = Provider<GoRouter>((ref) {
           routineId: state.uri.queryParameters['id'],
           initialName: state.uri.queryParameters['name'],
         ),
+      ),
+      GoRoute(
+        path: '/settings',
+        builder: (_, _) => const SettingsScreen(),
+      ),
+      GoRoute(
+        path: '/exercises',
+        builder: (_, _) => const ExerciseBrowserScreen(),
+      ),
+      GoRoute(
+        path: '/profile/edit',
+        builder: (_, _) => const EditProfileScreen(),
+      ),
+      GoRoute(
+        path: '/profile/friends',
+        builder: (_, _) => const FindFriendsScreen(),
       ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) =>

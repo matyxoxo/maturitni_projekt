@@ -45,7 +45,11 @@ class _UsernameScreenState extends ConsumerState<UsernameScreen> {
               children: [
                 const Text(
                   'Pick a username',
-                  style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontSize: 30,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.5,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 Text(
