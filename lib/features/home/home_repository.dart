@@ -29,6 +29,7 @@ class WorkoutSummary {
     required this.username,
     required this.profilePhotoUrl,
     required this.exercises,
+    this.userId,
   });
 
   final String workoutId;
@@ -41,6 +42,9 @@ class WorkoutSummary {
   final String username;
   final String? profilePhotoUrl;
   final List<WorkoutExerciseBrief> exercises;
+
+  /// Autor workoutu (null, kdyz select neobsahuje users.id).
+  final String? userId;
 
   factory WorkoutSummary.fromRow(Map<String, dynamic> row) {
     final user = row['users'] as Map<String, dynamic>?;
@@ -79,6 +83,7 @@ class WorkoutSummary {
       username: user?['username'] as String? ?? 'Unknown',
       profilePhotoUrl: user?['profile_photo_url'] as String?,
       exercises: exercises,
+      userId: user?['id'] as String?,
     );
   }
 }
@@ -163,6 +168,7 @@ class WorkoutDetail {
     required this.username,
     required this.profilePhotoUrl,
     required this.exercises,
+    this.userId,
   });
 
   final String workoutId;
@@ -172,6 +178,9 @@ class WorkoutDetail {
   final String username;
   final String? profilePhotoUrl;
   final List<WorkoutDetailExercise> exercises;
+
+  /// Autor workoutu (null, kdyz select neobsahuje users.id).
+  final String? userId;
 
   /// Vypocteno v Dartu z workout_sets (neni ulozeno v DB).
   double get totalVolumeKg {
@@ -214,6 +223,7 @@ class WorkoutDetail {
       username: user?['username'] as String? ?? 'Unknown',
       profilePhotoUrl: user?['profile_photo_url'] as String?,
       exercises: exercises,
+      userId: user?['id'] as String?,
     );
   }
 }
@@ -225,7 +235,7 @@ final workoutDetailProvider =
       .from('workouts')
       .select('''
         workout_id, workout_title, created_at, duration_seconds,
-        users (username, profile_photo_url),
+        users (id, username, profile_photo_url),
         workout_exercises (
           order_index,
           exercises (exercise_name, exercise_type, exercise_icon_url),

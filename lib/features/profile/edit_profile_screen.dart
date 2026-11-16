@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../core/theme.dart';
 import 'profile_repository.dart';
 
 /// Uprava udaju profilu (jmeno, vaha, cele jmeno, fotka URL).
@@ -92,23 +94,79 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final profileAsync = ref.watch(profileProvider);
+    final userId = Supabase.instance.client.auth.currentUser?.id ?? '';
+    final profileAsync = ref.watch(profileProvider(userId));
 
     return Scaffold(
       appBar: AppBar(title: const Text('Edit profile')),
       body: profileAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, _) => Center(child: Text('Error: $err')),
+        error: (err, _) => Center(
+          child: Text(
+            'Error: $err',
+            style: const TextStyle(color: AppTheme.textMuted),
+          ),
+        ),
         data: (profile) {
           _initControllers(profile);
           return Form(
             key: _formKey,
             child: ListView(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 28),
               children: [
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(18),
+                    child: AnimatedBuilder(
+                      animation: Listenable.merge(
+                        [_photoUrlController, _usernameController],
+                      ),
+                      builder: (context, _) => Row(
+                        children: [
+                          _AvatarPreview(
+                            photoUrl: _photoUrlController.text.trim(),
+                            username: _usernameController.text.trim(),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  _usernameController.text.trim().isEmpty
+                                      ? 'Your profile'
+                                      : _usernameController.text.trim(),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontSize: 17,
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: -0.3,
+                                  ),
+                                ),
+                                const SizedBox(height: 3),
+                                const Text(
+                                  'This is how other lifters see you.',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: AppTheme.textMuted,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 18),
                 TextFormField(
                   controller: _usernameController,
-                  decoration: const InputDecoration(labelText: 'Username'),
+                  decoration: const InputDecoration(
+                    labelText: 'Username',
+                    prefixIcon: Icon(Icons.alternate_email_rounded),
+                  ),
                   validator: (value) {
                     final v = value?.trim() ?? '';
                     if (v.length < 3 || v.length > 20) {
@@ -117,12 +175,15 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                     return null;
                   },
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 14),
                 TextFormField(
                   controller: _fullNameController,
-                  decoration: const InputDecoration(labelText: 'Full name'),
+                  decoration: const InputDecoration(
+                    labelText: 'Full name',
+                    prefixIcon: Icon(Icons.badge_outlined),
+                  ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 14),
                 TextFormField(
                   controller: _weightController,
                   keyboardType: const TextInputType.numberWithOptions(
@@ -130,25 +191,30 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   ),
                   decoration: const InputDecoration(
                     labelText: 'Body weight (kg)',
+                    prefixIcon: Icon(Icons.monitor_weight_outlined),
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 14),
                 TextFormField(
                   controller: _photoUrlController,
                   keyboardType: TextInputType.url,
                   decoration: const InputDecoration(
                     labelText: 'Profile photo URL',
                     helperText: 'Paste a link to an image',
+                    prefixIcon: Icon(Icons.image_outlined),
                   ),
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: 28),
                 FilledButton(
                   onPressed: _loading ? null : () => _save(profile),
                   child: _loading
                       ? const SizedBox(
                           height: 20,
                           width: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
                         )
                       : const Text('Save'),
                 ),
@@ -156,6 +222,51 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+/// Nahled profilovky podle zadaneho URL / uzivatelskeho jmena.
+class _AvatarPreview extends StatelessWidget {
+  const _AvatarPreview({required this.photoUrl, required this.username});
+
+  final String photoUrl;
+  final String username;
+
+  @override
+  Widget build(BuildContext context) {
+    final hasPhoto = photoUrl.isNotEmpty;
+    final initial = username.isEmpty ? '?' : username[0].toUpperCase();
+    final safe = username.isEmpty ? '?' : username;
+
+    return Container(
+      padding: const EdgeInsets.all(2.5),
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: AppTheme.accentGradient,
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.accent.withValues(alpha: 0.28),
+            blurRadius: 16,
+          ),
+        ],
+      ),
+      child: CircleAvatar(
+        radius: 27,
+        backgroundColor: AppTheme.avatarColor(safe),
+        backgroundImage: hasPhoto ? NetworkImage(photoUrl) : null,
+        onBackgroundImageError: hasPhoto ? (_, _) {} : null,
+        child: hasPhoto
+            ? null
+            : Text(
+                initial,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
       ),
     );
   }

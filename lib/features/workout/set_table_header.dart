@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/exercise_types.dart';
+import '../../core/theme.dart';
 
 /// Hlavicka tabulky serii u cviku – popisky sloupcu (SET, PREVIOUS, KG, REPS...).
 ///
@@ -17,10 +18,10 @@ class SetTableHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final style = TextStyle(
+    final style = const TextStyle(
       fontSize: 11,
-      fontWeight: FontWeight.w600,
-      color: Colors.grey.shade500,
+      fontWeight: FontWeight.w700,
+      color: AppTheme.textMuted,
       letterSpacing: 0.5,
     );
 

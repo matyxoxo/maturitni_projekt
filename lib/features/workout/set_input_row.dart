@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/exercise_types.dart';
 import '../../core/set_type.dart';
+import '../../core/theme.dart';
 import '../../core/widgets/set_type_sheet.dart';
 import 'active_workout_provider.dart';
 
@@ -175,6 +176,9 @@ class _SetInputRowState extends ConsumerState<SetInputRow> {
   }
 
   Widget _buildSetCircle(String setType) {
+    final isSpecial = setType != SetType.normal;
+    final color = _typeColor(setType);
+
     return SizedBox(
       width: 44,
       child: Center(
@@ -187,13 +191,21 @@ class _SetInputRowState extends ConsumerState<SetInputRow> {
             alignment: Alignment.center,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              border: Border.all(color: Theme.of(context).colorScheme.outline),
+              color: isSpecial ? color.withValues(alpha: 0.14) : null,
+              border: Border.all(
+                color: isSpecial
+                    ? color.withValues(alpha: 0.55)
+                    : Theme.of(context).colorScheme.outline,
+              ),
             ),
             child: Text(
               SetType.indicator(setType, _setNumber),
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 13,
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.w700,
+                color: isSpecial
+                    ? color
+                    : Theme.of(context).colorScheme.onSurface,
               ),
             ),
           ),
@@ -202,12 +214,26 @@ class _SetInputRowState extends ConsumerState<SetInputRow> {
     );
   }
 
+  /// Barva krouzku podle typu serie.
+  Color _typeColor(String setType) {
+    switch (setType) {
+      case SetType.warmup:
+        return AppTheme.cyan;
+      case SetType.failure:
+        return AppTheme.danger;
+      case SetType.dropSet:
+        return AppTheme.accentBright;
+      default:
+        return Theme.of(context).colorScheme.onSurface;
+    }
+  }
+
   Widget _buildPreviousLabel(String label) {
     return Expanded(
       child: Center(
         child: Text(
           label,
-          style: TextStyle(fontSize: 13, color: Colors.grey.shade500),
+          style: const TextStyle(fontSize: 13, color: AppTheme.textMuted),
           overflow: TextOverflow.ellipsis,
         ),
       ),
@@ -253,7 +279,7 @@ class _SetInputRowState extends ConsumerState<SetInputRow> {
           size: 24,
           color: isCompleted
               ? Theme.of(context).colorScheme.primary
-              : Colors.grey.shade600,
+              : AppTheme.surfaceHighest,
         ),
         onPressed: _toggleComplete,
       ),

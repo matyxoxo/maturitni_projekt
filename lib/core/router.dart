@@ -13,6 +13,7 @@ import '../features/home/home_screen.dart';
 import '../features/onboarding/username_screen.dart';
 import '../features/onboarding/weight_screen.dart';
 import '../features/profile/edit_profile_screen.dart';
+import '../features/profile/follow_list_screen.dart';
 import '../features/profile/profile_screen.dart';
 import '../features/profile/settings_screen.dart';
 import '../features/rank/rank_screen.dart';
@@ -110,8 +111,21 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (_, _) => const EditProfileScreen(),
       ),
       GoRoute(
-        path: '/profile/friends',
+        path: '/find-friends',
         builder: (_, _) => const FindFriendsScreen(),
+      ),
+      GoRoute(
+        path: '/profile/follow-list',
+        builder: (_, state) => FollowListScreen(
+          userId: state.uri.queryParameters['id'] ?? '',
+          type: state.uri.queryParameters['type'] ?? 'followers',
+        ),
+      ),
+      GoRoute(
+        path: '/u/:userId',
+        builder: (_, state) => ProfileScreen(
+          userId: state.pathParameters['userId'],
+        ),
       ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) =>

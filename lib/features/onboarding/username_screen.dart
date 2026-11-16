@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/theme.dart';
 import '../auth/auth_controller.dart';
 
 class UsernameScreen extends ConsumerStatefulWidget {
@@ -43,18 +44,40 @@ class _UsernameScreenState extends ConsumerState<UsernameScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                Container(
+                  width: 54,
+                  height: 54,
+                  decoration: BoxDecoration(
+                    color: AppTheme.accent.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: AppTheme.accent.withValues(alpha: 0.25),
+                    ),
+                  ),
+                  child: const Icon(
+                    Icons.alternate_email_rounded,
+                    size: 26,
+                    color: AppTheme.accentBright,
+                  ),
+                ),
+                const SizedBox(height: 20),
                 const Text(
                   'Pick a username',
                   style: TextStyle(
-                    fontSize: 30,
+                    fontSize: 28,
                     fontWeight: FontWeight.w800,
-                    letterSpacing: -0.5,
+                    letterSpacing: -0.8,
+                    height: 1.15,
                   ),
                 ),
                 const SizedBox(height: 8),
-                Text(
+                const Text(
                   'Other lifters will see this name on the leaderboard.',
-                  style: TextStyle(color: Colors.grey.shade400),
+                  style: TextStyle(
+                    color: AppTheme.textMuted,
+                    fontSize: 14,
+                    height: 1.4,
+                  ),
                 ),
                 const SizedBox(height: 32),
                 TextField(
@@ -72,7 +95,10 @@ class _UsernameScreenState extends ConsumerState<UsernameScreen> {
                       ? const SizedBox(
                           height: 20,
                           width: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
                         )
                       : const Text('Continue'),
                 ),

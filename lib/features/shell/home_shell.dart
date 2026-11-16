@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/format.dart';
+import '../../core/theme.dart';
 import '../../core/widgets/confirm_dialog.dart';
 import '../workout/active_workout_provider.dart';
 
@@ -35,31 +36,38 @@ class HomeShell extends ConsumerWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           if (showMinimizedBar) const _MinimizedWorkoutBar(),
-          NavigationBar(
-            selectedIndex: navigationShell.currentIndex,
-            onDestinationSelected: (index) => _selectBranch(ref, index),
-            destinations: const [
-              NavigationDestination(
-                icon: Icon(Icons.home_outlined),
-                selectedIcon: Icon(Icons.home),
-                label: 'Home',
+          DecoratedBox(
+            decoration: BoxDecoration(
+              border: Border(
+                top: BorderSide(color: Colors.white.withValues(alpha: 0.06)),
               ),
-              NavigationDestination(
-                icon: Icon(Icons.fitness_center_outlined),
-                selectedIcon: Icon(Icons.fitness_center),
-                label: 'Workout',
-              ),
-              NavigationDestination(
-                icon: Icon(Icons.person_outline),
-                selectedIcon: Icon(Icons.person),
-                label: 'Profile',
-              ),
-              NavigationDestination(
-                icon: Icon(Icons.leaderboard_outlined),
-                selectedIcon: Icon(Icons.leaderboard),
-                label: 'Rank',
-              ),
-            ],
+            ),
+            child: NavigationBar(
+              selectedIndex: navigationShell.currentIndex,
+              onDestinationSelected: (index) => _selectBranch(ref, index),
+              destinations: const [
+                NavigationDestination(
+                  icon: Icon(Icons.home_outlined),
+                  selectedIcon: Icon(Icons.home_rounded),
+                  label: 'Home',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.fitness_center_outlined),
+                  selectedIcon: Icon(Icons.fitness_center_rounded),
+                  label: 'Workout',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.person_outline_rounded),
+                  selectedIcon: Icon(Icons.person_rounded),
+                  label: 'Profile',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.leaderboard_outlined),
+                  selectedIcon: Icon(Icons.leaderboard_rounded),
+                  label: 'Rank',
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -94,41 +102,64 @@ class _MinimizedWorkoutBar extends ConsumerWidget {
     final elapsedSeconds = now.difference(workout.startedAt).inSeconds;
 
     return Material(
-      color: Theme.of(context).colorScheme.surfaceContainerHighest,
-      elevation: 8,
-      child: SafeArea(
-        top: false,
-        child: SizedBox(
-          height: 48,
-          child: Row(
-            children: [
-              IconButton(
-                icon: const Icon(Icons.keyboard_arrow_up),
-                tooltip: 'Expand workout',
-                onPressed: () => _restoreWorkout(context, ref),
-              ),
-              Icon(
-                Icons.fitness_center,
-                size: 18,
-                color: Theme.of(context).colorScheme.primary,
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  'Workout running • ${formatDuration(elapsedSeconds)}',
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                  ),
-                  overflow: TextOverflow.ellipsis,
+      color: Colors.transparent,
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFF16233A), Color(0xFF101826)],
+          ),
+          border: Border(
+            top: BorderSide(color: AppTheme.accent.withValues(alpha: 0.35)),
+          ),
+        ),
+        child: SafeArea(
+          top: false,
+          child: SizedBox(
+            height: 50,
+            child: Row(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.keyboard_arrow_up_rounded),
+                  tooltip: 'Expand workout',
+                  onPressed: () => _restoreWorkout(context, ref),
                 ),
-              ),
-              IconButton(
-                icon: Icon(Icons.delete_outline, color: Colors.red.shade400),
-                tooltip: 'Discard workout',
-                onPressed: () => _discardWorkout(context, ref),
-              ),
-            ],
+                Container(
+                  width: 30,
+                  height: 30,
+                  decoration: BoxDecoration(
+                    color: AppTheme.accent.withValues(alpha: 0.16),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.fitness_center_rounded,
+                    size: 16,
+                    color: AppTheme.accentBright,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Workout running • ${formatDuration(elapsedSeconds)}',
+                    style: const TextStyle(
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: -0.1,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(
+                    Icons.delete_outline_rounded,
+                    color: AppTheme.danger,
+                  ),
+                  tooltip: 'Discard workout',
+                  onPressed: () => _discardWorkout(context, ref),
+                ),
+              ],
+            ),
           ),
         ),
       ),

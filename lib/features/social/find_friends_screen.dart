@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../core/theme.dart';
+import '../../core/widgets/user_tile.dart';
+import '../home/feed_repository.dart';
 import '../profile/profile_repository.dart';
 
 /// Vyhledavani uzivatelu a follow/unfollow.
@@ -27,6 +31,7 @@ class _FindFriendsScreenState extends ConsumerState<FindFriendsScreen> {
     }
     ref.invalidate(followCountsProvider);
     ref.invalidate(myFollowingProvider);
+    ref.invalidate(feedProvider);
   }
 
   @override
@@ -39,40 +44,79 @@ class _FindFriendsScreenState extends ConsumerState<FindFriendsScreen> {
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
             child: TextField(
               onChanged: (value) => setState(() => _query = value),
+              textInputAction: TextInputAction.search,
               decoration: const InputDecoration(
                 hintText: 'Search by username...',
-                prefixIcon: Icon(Icons.search),
+                prefixIcon: Icon(Icons.search_rounded),
               ),
             ),
           ),
           Expanded(
             child: usersAsync.when(
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (err, _) => Center(child: Text('Error: $err')),
+              error: (err, _) => Center(
+                child: Text(
+                  'Error: $err',
+                  style: const TextStyle(color: AppTheme.textMuted),
+                ),
+              ),
               data: (users) {
                 if (users.isEmpty) {
                   return Center(
-                    child: Text(
-                      _query.isEmpty
-                          ? 'Type a username to search.'
-                          : 'No users found.',
-                      style: TextStyle(color: Colors.grey.shade400),
+                    child: Padding(
+                      padding: const EdgeInsets.all(32),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 76,
+                            height: 76,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: AppTheme.accent.withValues(alpha: 0.10),
+                              border: Border.all(
+                                color:
+                                    AppTheme.accent.withValues(alpha: 0.22),
+                              ),
+                            ),
+                            child: const Icon(
+                              Icons.person_search_rounded,
+                              size: 34,
+                              color: AppTheme.accentBright,
+                            ),
+                          ),
+                          const SizedBox(height: 18),
+                          Text(
+                            _query.isEmpty
+                                ? 'Type a username to search.'
+                                : 'No users found.',
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: AppTheme.textMuted,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   );
                 }
                 return ListView.builder(
-                  padding: const EdgeInsets.only(top: 8, bottom: 16),
+                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
                   itemCount: users.length,
                   itemBuilder: (context, index) {
                     final user = users[index];
-                    final isFollowing = following.contains(user.id);
-                    return _UserTile(
-                      user: user,
-                      isFollowing: isFollowing,
-                      onToggle: () => _toggleFollow(user, isFollowing),
+                    return UserTile(
+                      username: user.username,
+                      fullName: user.fullName,
+                      photoUrl: user.profilePhotoUrl,
+                      isFollowing: following.contains(user.id),
+                      onTap: () => context.push('/u/${user.id}'),
+                      onToggleFollow: () =>
+                          _toggleFollow(user, following.contains(user.id)),
                     );
                   },
                 );
@@ -82,62 +126,5 @@ class _FindFriendsScreenState extends ConsumerState<FindFriendsScreen> {
         ],
       ),
     );
-  }
-}
-
-class _UserTile extends StatelessWidget {
-  const _UserTile({
-    required this.user,
-    required this.isFollowing,
-    required this.onToggle,
-  });
-
-  final PublicUser user;
-  final bool isFollowing;
-  final VoidCallback onToggle;
-
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      leading: CircleAvatar(
-        backgroundColor: _avatarColor(user.username),
-        backgroundImage: user.profilePhotoUrl != null &&
-                user.profilePhotoUrl!.isNotEmpty
-            ? NetworkImage(user.profilePhotoUrl!)
-            : null,
-        child: user.profilePhotoUrl == null || user.profilePhotoUrl!.isEmpty
-            ? Text(
-                user.username.substring(0, 1).toUpperCase(),
-                style: const TextStyle(color: Colors.white),
-              )
-            : null,
-      ),
-      title: Text(user.username),
-      subtitle: user.fullName != null && user.fullName!.isNotEmpty
-          ? Text(user.fullName!)
-          : null,
-      trailing: FilledButton.tonal(
-        onPressed: onToggle,
-        style: isFollowing
-            ? FilledButton.styleFrom(
-                backgroundColor: Colors.grey.shade700,
-                foregroundColor: Colors.white,
-              )
-            : null,
-        child: Text(isFollowing ? 'Following' : 'Follow'),
-      ),
-    );
-  }
-
-  static Color _avatarColor(String name) {
-    const colors = <Color>[
-      Colors.teal,
-      Colors.indigo,
-      Colors.deepOrange,
-      Colors.pink,
-      Colors.blueGrey,
-      Colors.green,
-    ];
-    return colors[name.hashCode.abs() % colors.length];
   }
 }

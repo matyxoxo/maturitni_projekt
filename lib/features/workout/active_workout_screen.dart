@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/theme.dart';
 import '../../core/widgets/confirm_dialog.dart';
 import '../exercises/exercise_picker_screen.dart';
 import '../exercises/exercise_repository.dart';
+import '../home/feed_repository.dart';
 import '../home/home_repository.dart';
 import 'active_workout_provider.dart';
 import 'exercise_card.dart';
@@ -56,6 +58,7 @@ class ActiveWorkoutScreen extends ConsumerWidget {
 
     if (error == null) {
       ref.invalidate(myWorkoutsProvider);
+      ref.invalidate(feedProvider);
       ref.invalidate(previousWorkoutSetsProvider);
       _showSavedMessage(context, workout.totalVolume);
       context.go('/workout');
@@ -84,6 +87,12 @@ class ActiveWorkoutScreen extends ConsumerWidget {
             child: const Text('Cancel'),
           ),
           FilledButton(
+            style: FilledButton.styleFrom(
+              minimumSize: const Size(84, 44),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
             onPressed: () => Navigator.pop(dialogContext, titleController.text),
             child: const Text('Save'),
           ),
@@ -163,20 +172,57 @@ class _EmptyWorkoutMessage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            'No exercises yet',
-            style: TextStyle(color: Colors.grey.shade400),
-          ),
-          const SizedBox(height: 16),
-          FilledButton.icon(
-            onPressed: onAddExercise,
-            icon: const Icon(Icons.add),
-            label: const Text('Add exercise'),
-          ),
-        ],
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 92,
+              height: 92,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppTheme.accent.withValues(alpha: 0.10),
+                border: Border.all(
+                  color: AppTheme.accent.withValues(alpha: 0.25),
+                ),
+              ),
+              child: const Icon(
+                Icons.fitness_center_rounded,
+                size: 40,
+                color: AppTheme.accentBright,
+              ),
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              'No exercises yet',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                letterSpacing: -0.3,
+              ),
+            ),
+            const SizedBox(height: 6),
+            const Text(
+              'Add your first exercise and start logging sets.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 13.5,
+                height: 1.4,
+                color: AppTheme.textMuted,
+              ),
+            ),
+            const SizedBox(height: 22),
+            SizedBox(
+              width: 210,
+              child: FilledButton.icon(
+                onPressed: onAddExercise,
+                icon: const Icon(Icons.add_rounded),
+                label: const Text('Add exercise'),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -205,11 +251,18 @@ class _ExerciseList extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           child: OutlinedButton.icon(
             style: OutlinedButton.styleFrom(
-              foregroundColor: Colors.red.shade400,
-              side: BorderSide(color: Colors.red.shade400),
+              minimumSize: const Size.fromHeight(48),
+              foregroundColor: AppTheme.danger,
+              backgroundColor: AppTheme.danger.withValues(alpha: 0.07),
+              side: BorderSide(
+                color: AppTheme.danger.withValues(alpha: 0.35),
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
             ),
             onPressed: onDiscard,
-            icon: const Icon(Icons.delete_outline),
+            icon: const Icon(Icons.delete_outline_rounded, size: 19),
             label: const Text('Discard workout'),
           ),
         );

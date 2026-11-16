@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../core/theme.dart';
 import '../../core/widgets/confirm_dialog.dart';
 import '../auth/auth_controller.dart';
 import 'profile_repository.dart';
@@ -24,8 +25,9 @@ class SettingsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final userId = Supabase.instance.client.auth.currentUser?.id ?? '';
     final email = Supabase.instance.client.auth.currentUser?.email ?? '';
-    final profile = ref.watch(profileProvider).value;
+    final profile = ref.watch(profileProvider(userId)).value;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Settings')),
@@ -33,34 +35,32 @@ class SettingsScreen extends ConsumerWidget {
         children: [
           Expanded(
             child: ListView(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
               children: [
-                _SectionHeader(title: 'Account'),
+                const _SectionHeader(title: 'Account'),
                 Card(
                   margin: EdgeInsets.zero,
                   clipBehavior: Clip.antiAlias,
                   child: Column(
                     children: [
-                      ListTile(
-                        leading: const Icon(Icons.person_outline),
-                        title: const Text('Username'),
-                        subtitle: Text(profile?.username ?? 'Loading...'),
+                      _InfoTile(
+                        icon: Icons.alternate_email_rounded,
+                        title: 'Username',
+                        value: profile?.username ?? 'Loading...',
                       ),
                       const Divider(height: 1),
-                      ListTile(
-                        leading: const Icon(Icons.email_outlined),
-                        title: const Text('Email'),
-                        subtitle: Text(email),
+                      _InfoTile(
+                        icon: Icons.mail_outline_rounded,
+                        title: 'Email',
+                        value: email,
                       ),
                       const Divider(height: 1),
-                      ListTile(
-                        leading: const Icon(Icons.monitor_weight_outlined),
-                        title: const Text('Body weight'),
-                        subtitle: Text(
-                          profile?.bodyWeightKg != null
-                              ? '${profile!.bodyWeightKg} kg'
-                              : 'Not set',
-                        ),
+                      _InfoTile(
+                        icon: Icons.monitor_weight_outlined,
+                        title: 'Body weight',
+                        value: profile?.bodyWeightKg != null
+                            ? '${profile!.bodyWeightKg} kg'
+                            : 'Not set',
                       ),
                     ],
                   ),
@@ -75,16 +75,76 @@ class SettingsScreen extends ConsumerWidget {
                 width: double.infinity,
                 child: OutlinedButton.icon(
                   onPressed: () => _signOut(context, ref),
-                  icon: const Icon(Icons.logout, color: Colors.red),
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size.fromHeight(50),
+                    foregroundColor: AppTheme.danger,
+                    backgroundColor:
+                        AppTheme.danger.withValues(alpha: 0.07),
+                    side: BorderSide(
+                      color: AppTheme.danger.withValues(alpha: 0.35),
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                  icon: const Icon(Icons.logout_rounded, size: 19),
                   label: const Text(
                     'Log out',
-                    style: TextStyle(color: Colors.red),
+                    style: TextStyle(fontWeight: FontWeight.w700),
                   ),
                 ),
               ),
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Radek s informaci o uctu.
+class _InfoTile extends StatelessWidget {
+  const _InfoTile({
+    required this.icon,
+    required this.title,
+    required this.value,
+  });
+
+  final IconData icon;
+  final String title;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      leading: Container(
+        width: 38,
+        height: 38,
+        decoration: BoxDecoration(
+          color: AppTheme.accent.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Icon(icon, size: 19, color: AppTheme.accentBright),
+      ),
+      title: Text(
+        title,
+        style: const TextStyle(
+          fontSize: 13.5,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+      subtitle: Padding(
+        padding: const EdgeInsets.only(top: 2),
+        child: Text(
+          value,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(
+            fontSize: 12.5,
+            color: AppTheme.textMuted,
+          ),
+        ),
       ),
     );
   }
@@ -99,14 +159,14 @@ class _SectionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(left: 4, bottom: 8),
+      padding: const EdgeInsets.only(left: 4, bottom: 10),
       child: Text(
-        title,
-        style: TextStyle(
-          fontSize: 13,
-          fontWeight: FontWeight.w600,
-          color: Colors.grey.shade400,
-          letterSpacing: 0.5,
+        title.toUpperCase(),
+        style: const TextStyle(
+          fontSize: 11.5,
+          fontWeight: FontWeight.w700,
+          color: AppTheme.textMuted,
+          letterSpacing: 0.9,
         ),
       ),
     );

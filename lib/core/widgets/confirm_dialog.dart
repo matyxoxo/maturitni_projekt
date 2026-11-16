@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../theme.dart';
+
 /// Zobrazi dialog "Opravdu smazat/zahodit?" a vrati true, pokud uzivatel potvrdil.
 Future<bool> showConfirmDialog(
   BuildContext context, {
@@ -11,14 +13,32 @@ Future<bool> showConfirmDialog(
     context: context,
     builder: (dialogContext) => AlertDialog(
       title: Text(title),
-      content: Text(message),
+      content: Text(
+        message,
+        style: const TextStyle(
+          fontSize: 14,
+          height: 1.4,
+          color: AppTheme.textMuted,
+        ),
+      ),
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(dialogContext, false),
           child: const Text('Cancel'),
         ),
         FilledButton(
-          style: FilledButton.styleFrom(backgroundColor: Colors.red.shade700),
+          style: FilledButton.styleFrom(
+            minimumSize: const Size(96, 44),
+            backgroundColor: AppTheme.danger,
+            foregroundColor: Colors.white,
+            textStyle: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
           onPressed: () => Navigator.pop(dialogContext, true),
           child: Text(confirmLabel),
         ),

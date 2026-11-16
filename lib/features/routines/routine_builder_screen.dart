@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/exercise_types.dart';
 import '../../core/set_type.dart';
+import '../../core/theme.dart';
 import '../../core/widgets/exercise_thumbnail.dart';
 import '../../core/widgets/set_type_sheet.dart';
 import '../exercises/exercise_picker_screen.dart';
@@ -186,16 +187,17 @@ class _RoutineBuilderScreenState extends ConsumerState<RoutineBuilderScreen> {
 
   Widget _buildEditor() {
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 28),
       children: [
         TextField(
           controller: _nameController,
           decoration: const InputDecoration(
             labelText: 'Routine name',
             hintText: 'e.g. Push day',
+            prefixIcon: Icon(Icons.edit_outlined),
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 18),
         for (var i = 0; i < _exercises.length; i++)
           _ExerciseDraftCard(
             key: ObjectKey(_exercises[i]),
@@ -210,11 +212,23 @@ class _RoutineBuilderScreenState extends ConsumerState<RoutineBuilderScreen> {
               () => _exercises[i].restTimeSeconds = seconds,
             ),
           ),
-        const SizedBox(height: 8),
-        FilledButton.icon(
+        const SizedBox(height: 6),
+        FilledButton.tonalIcon(
           onPressed: _addExercise,
-          icon: const Icon(Icons.add),
+          icon: const Icon(Icons.add_rounded, size: 19),
           label: const Text('Add exercise'),
+          style: FilledButton.styleFrom(
+            minimumSize: const Size.fromHeight(48),
+            backgroundColor: AppTheme.accent.withValues(alpha: 0.14),
+            foregroundColor: AppTheme.accentBright,
+            textStyle: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+            ),
+          ),
         ),
         const SizedBox(height: 24),
       ],
@@ -254,7 +268,7 @@ class _ExerciseDraftCard extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: Padding(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.fromLTRB(14, 14, 14, 8),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -265,11 +279,21 @@ class _ExerciseDraftCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     draft.exercise.name,
-                    style: const TextStyle(fontWeight: FontWeight.bold),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: -0.2,
+                    ),
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.delete_outline),
+                  icon: const Icon(
+                    Icons.delete_outline_rounded,
+                    size: 20,
+                    color: AppTheme.textMuted,
+                  ),
                   onPressed: onRemoveExercise,
                 ),
               ],
@@ -278,7 +302,7 @@ class _ExerciseDraftCard extends StatelessWidget {
               value: draft.restTimeSeconds,
               onChanged: onChangeRestTime,
             ),
-            const Divider(),
+            const Divider(height: 20),
             SetTableHeader(config: config),
             for (var s = 0; s < draft.targets.length; s++)
               _TargetSetRow(
@@ -294,7 +318,7 @@ class _ExerciseDraftCard extends StatelessWidget {
               alignment: Alignment.centerRight,
               child: TextButton.icon(
                 onPressed: onAddSet,
-                icon: const Icon(Icons.add, size: 18),
+                icon: const Icon(Icons.add_rounded, size: 18),
                 label: const Text('Add set'),
               ),
             ),
@@ -325,11 +349,15 @@ class _RestTimeRow extends StatelessWidget {
       padding: const EdgeInsets.only(top: 4),
       child: Row(
         children: [
-          Icon(Icons.timer_outlined, size: 18, color: Colors.grey.shade500),
+          const Icon(
+            Icons.timer_outlined,
+            size: 18,
+            color: AppTheme.textMuted,
+          ),
           const SizedBox(width: 8),
-          Text(
+          const Text(
             'Rest between sets',
-            style: TextStyle(fontSize: 13, color: Colors.grey.shade400),
+            style: TextStyle(fontSize: 13, color: AppTheme.textMuted),
           ),
           const Spacer(),
           SizedBox(
@@ -504,6 +532,10 @@ class _TargetSetRowState extends ConsumerState<_TargetSetRow> {
   }
 
   Widget _buildSetCircle() {
+    final setType = widget.target.setType;
+    final isSpecial = setType != SetType.normal;
+    final color = _typeColor(setType);
+
     return SizedBox(
       width: 44,
       child: Center(
@@ -516,19 +548,39 @@ class _TargetSetRowState extends ConsumerState<_TargetSetRow> {
             alignment: Alignment.center,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              border: Border.all(color: Colors.grey.shade600),
+              color: isSpecial ? color.withValues(alpha: 0.14) : null,
+              border: Border.all(
+                color: isSpecial
+                    ? color.withValues(alpha: 0.55)
+                    : AppTheme.outline,
+              ),
             ),
             child: Text(
-              SetType.indicator(widget.target.setType, widget.setNumber),
-              style: const TextStyle(
+              SetType.indicator(setType, widget.setNumber),
+              style: TextStyle(
                 fontSize: 13,
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.w700,
+                color: isSpecial ? color : null,
               ),
             ),
           ),
         ),
       ),
     );
+  }
+
+  /// Barva krouzku podle typu serie.
+  Color _typeColor(String setType) {
+    switch (setType) {
+      case SetType.warmup:
+        return AppTheme.cyan;
+      case SetType.failure:
+        return AppTheme.danger;
+      case SetType.dropSet:
+        return AppTheme.accentBright;
+      default:
+        return AppTheme.outline;
+    }
   }
 
   Widget _buildInputField({

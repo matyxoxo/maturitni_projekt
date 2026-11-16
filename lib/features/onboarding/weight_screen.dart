@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/theme.dart';
 import '../auth/auth_controller.dart';
 
 class WeightScreen extends ConsumerStatefulWidget {
@@ -50,18 +51,40 @@ class _WeightScreenState extends ConsumerState<WeightScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                Container(
+                  width: 54,
+                  height: 54,
+                  decoration: BoxDecoration(
+                    color: AppTheme.accent.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: AppTheme.accent.withValues(alpha: 0.25),
+                    ),
+                  ),
+                  child: const Icon(
+                    Icons.monitor_weight_outlined,
+                    size: 26,
+                    color: AppTheme.accentBright,
+                  ),
+                ),
+                const SizedBox(height: 20),
                 const Text(
                   'What is your body weight?',
                   style: TextStyle(
-                    fontSize: 30,
+                    fontSize: 28,
                     fontWeight: FontWeight.w800,
-                    letterSpacing: -0.5,
+                    letterSpacing: -0.8,
+                    height: 1.15,
                   ),
                 ),
                 const SizedBox(height: 8),
-                Text(
+                const Text(
                   'We use it to estimate your lifting volume.',
-                  style: TextStyle(color: Colors.grey.shade400),
+                  style: TextStyle(
+                    color: AppTheme.textMuted,
+                    fontSize: 14,
+                    height: 1.4,
+                  ),
                 ),
                 const SizedBox(height: 32),
                 TextField(
@@ -80,7 +103,10 @@ class _WeightScreenState extends ConsumerState<WeightScreen> {
                       ? const SizedBox(
                           height: 20,
                           width: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
                         )
                       : const Text('Continue'),
                 ),

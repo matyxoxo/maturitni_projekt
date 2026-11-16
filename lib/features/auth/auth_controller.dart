@@ -5,6 +5,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../home/feed_repository.dart';
+import '../home/home_repository.dart';
+import '../profile/profile_repository.dart';
+import '../routines/routines_repository.dart';
+import '../workout/active_workout_provider.dart';
+
 enum AppAuthStatus {
   loading,
   signedOut,
@@ -20,6 +26,10 @@ class AuthController extends Notifier<AppAuthStatus> {
   final _changes = StreamController<void>.broadcast();
   Stream<void> get changes => _changes.stream;
   static bool _googleInitialized = false;
+
+  /// Posledni znamy uzivatel – pri zmene (odhlaseni / jiny ucet)
+  /// se smazi vsechna data (feed, profil, follows, workouty...).
+  String? _activeUserId;
 
   SupabaseClient get _client => Supabase.instance.client;
 
@@ -38,6 +48,15 @@ class AuthController extends Notifier<AppAuthStatus> {
 
   Future<void> refresh() async {
     final session = _client.auth.currentSession;
+    final userId = session?.user.id;
+
+    // Zmena uctu (vcetne odhlaseni) – vyprazdneni cache stareho uzivatele.
+    // Odlozeno mikrotaskem, aby se providery nemenily behem buildu.
+    if (userId != _activeUserId) {
+      _activeUserId = userId;
+      scheduleMicrotask(_invalidateUserData);
+    }
+
     if (session == null) {
       state = AppAuthStatus.signedOut;
       _changes.add(null);
@@ -60,6 +79,29 @@ class AuthController extends Notifier<AppAuthStatus> {
       state = AppAuthStatus.needsUsername;
     }
     _changes.add(null);
+  }
+
+  /// Smaze vsechna data predchoziho uzivatele (volano pri zmene uctu).
+  void _invalidateUserData() {
+    ref.invalidate(feedProvider);
+    ref.invalidate(userFeedProvider);
+    ref.invalidate(likeOverridesProvider);
+    ref.invalidate(workoutCommentsProvider);
+    ref.invalidate(workoutEngagementProvider);
+    ref.invalidate(myWorkoutsProvider);
+    ref.invalidate(workoutDetailProvider);
+    ref.invalidate(profileProvider);
+    ref.invalidate(workoutHistoryProvider);
+    ref.invalidate(followCountsProvider);
+    ref.invalidate(followersListProvider);
+    ref.invalidate(followingListProvider);
+    ref.invalidate(myFollowingProvider);
+    ref.invalidate(searchUsersProvider);
+    ref.invalidate(routinesProvider);
+    ref.invalidate(routineDetailProvider);
+    ref.invalidate(previousWorkoutSetsProvider);
+    // Aktivni workout patri predchozimu uctu.
+    ref.read(activeWorkoutProvider.notifier).reset();
   }
 
   Future<String?> signIn(String email, String password) async {
@@ -187,6 +229,15 @@ class AuthController extends Notifier<AppAuthStatus> {
 
   Future<void> signOut() async {
     await _client.auth.signOut();
+    // Odhlasit i Google – pri dalsim "Continue with Google" se
+    // zobrazi vyber uctu misto ticheho prihlaseni toho stareho.
+    if (_googleInitialized) {
+      try {
+        await GoogleSignIn.instance.signOut();
+      } catch (_) {
+        // Google odhlaseni muze selhat – nevadi, Supabase je odhlaseny.
+      }
+    }
     await refresh();
   }
 }

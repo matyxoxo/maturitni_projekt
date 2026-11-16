@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/exercise_types.dart';
+import '../../core/theme.dart';
 import '../../core/widgets/exercise_thumbnail.dart';
 import 'active_workout_provider.dart';
 import 'set_input_row.dart';
@@ -93,7 +94,10 @@ class _ExerciseHeader extends ConsumerWidget {
               ),
               Text(
                 muscleGroup,
-                style: TextStyle(fontSize: 12, color: Colors.grey.shade400),
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: AppTheme.textMuted,
+                ),
               ),
             ],
           ),
