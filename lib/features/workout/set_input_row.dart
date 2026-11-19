@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/exercise_types.dart';
 import '../../core/set_type.dart';
@@ -7,40 +6,51 @@ import '../../core/theme.dart';
 import '../../core/widgets/set_type_sheet.dart';
 import 'active_workout_provider.dart';
 
-/// Jeden radek serie v aktivnim workoutu.
+/// Jeden radek serie – v aktivnim workoutu i v editaci ulozeneho workoutu.
 ///
-/// Obsahuje: krouzek s cislem (klik = zmena typu), minule hodnoty,
+/// Obsahuje: krouzek s cislem (klik = zmena typu), pripadne minule hodnoty,
 /// vstupni pole podle typu cviku a zakrtnuti "hotovo".
-class SetInputRow extends ConsumerStatefulWidget {
+class SetInputRow extends StatefulWidget {
   const SetInputRow({
     super.key,
-    required this.exerciseIndex,
-    required this.setIndex,
+    required this.set,
+    required this.setNumber,
     required this.config,
+    required this.onChanged,
+    required this.onSetTypeChanged,
+    required this.onToggleComplete,
+    this.onRemoveSet,
+    this.previousLabel = '',
+    this.showPrevious = true,
   });
 
-  final int exerciseIndex;
-  final int setIndex;
+  /// Data serie. Widget je zapisuje primo do objektu a vola [onChanged].
+  final WorkoutSet set;
+  final int setNumber;
   final ExerciseInputConfig config;
+  final VoidCallback onChanged;
+  final ValueChanged<String> onSetTypeChanged;
+  final VoidCallback onToggleComplete;
+  final VoidCallback? onRemoveSet;
+  final String previousLabel;
+  final bool showPrevious;
 
   @override
-  ConsumerState<SetInputRow> createState() => _SetInputRowState();
+  State<SetInputRow> createState() => _SetInputRowState();
 }
 
-class _SetInputRowState extends ConsumerState<SetInputRow> {
+class _SetInputRowState extends State<SetInputRow> {
   late final TextEditingController _weightController;
   late final TextEditingController _repsController;
   late final TextEditingController _durationController;
   late final TextEditingController _distanceController;
 
-  int get _setNumber => widget.setIndex + 1;
-
   @override
   void initState() {
     super.initState();
-    final set = _currentSet();
+    final set = widget.set;
     _weightController = TextEditingController(
-      text: set.weightKg == null || set.weightKg == 0 ? '' : '${set.weightKg}',
+      text: _formatNumber(set.weightKg),
     );
     _repsController = TextEditingController(
       text: set.reps > 0 ? '${set.reps}' : '',
@@ -49,8 +59,14 @@ class _SetInputRowState extends ConsumerState<SetInputRow> {
       text: set.durationSeconds != null ? '${set.durationSeconds}' : '',
     );
     _distanceController = TextEditingController(
-      text: set.distanceMeters != null ? '${set.distanceMeters}' : '',
+      text: _formatNumber(set.distanceMeters),
     );
+  }
+
+  /// Cislo bez zbytecne desetinne casti (20.0 -> "20").
+  String _formatNumber(double? value) {
+    if (value == null || value == 0) return '';
+    return value == value.truncateToDouble() ? '${value.toInt()}' : '$value';
   }
 
   @override
@@ -62,67 +78,29 @@ class _SetInputRowState extends ConsumerState<SetInputRow> {
     super.dispose();
   }
 
-  WorkoutSet _currentSet() {
-    return ref
-        .read(activeWorkoutProvider)
-        .exercises[widget.exerciseIndex]
-        .sets[widget.setIndex];
-  }
-
   void _saveValues() {
-    ref.read(activeWorkoutProvider.notifier).updateSet(
-          widget.exerciseIndex,
-          widget.setIndex,
-          weightKg: double.tryParse(
-            _weightController.text.replaceAll(',', '.'),
-          ),
-          reps: int.tryParse(_repsController.text),
-          durationSeconds: int.tryParse(_durationController.text),
-          distanceMeters: double.tryParse(
-            _distanceController.text.replaceAll(',', '.'),
-          ),
-        );
+    final set = widget.set;
+    set.weightKg = double.tryParse(_weightController.text.replaceAll(',', '.'));
+    set.reps = int.tryParse(_repsController.text) ?? 0;
+    set.durationSeconds = int.tryParse(_durationController.text);
+    set.distanceMeters = double.tryParse(
+      _distanceController.text.replaceAll(',', '.'),
+    );
+    widget.onChanged();
   }
 
   void _openSetTypeSheet() {
-    final set = _currentSet();
     showSetTypeSheet(
       context,
-      currentType: set.setType,
-      onTypeSelected: (newType) {
-        ref.read(activeWorkoutProvider.notifier).setSetType(
-              widget.exerciseIndex,
-              widget.setIndex,
-              newType,
-            );
-      },
-      onRemoveSet: () {
-        ref.read(activeWorkoutProvider.notifier).removeSet(
-              widget.exerciseIndex,
-              widget.setIndex,
-            );
-      },
+      currentType: widget.set.setType,
+      onTypeSelected: widget.onSetTypeChanged,
+      onRemoveSet: widget.onRemoveSet,
     );
-  }
-
-  void _toggleComplete() {
-    ref.read(activeWorkoutProvider.notifier).toggleSetComplete(
-          widget.exerciseIndex,
-          widget.setIndex,
-        );
   }
 
   @override
   Widget build(BuildContext context) {
-    final set = _currentSet();
-    final previous = ref.watch(previousWorkoutSetsProvider).value;
-    final exerciseId = ref
-        .read(activeWorkoutProvider)
-        .exercises[widget.exerciseIndex]
-        .exercise
-        .id;
-    final previousLabel = previous?[exerciseId]?[_setNumber] ?? '';
-
+    final set = widget.set;
     final scheme = Theme.of(context).colorScheme;
     final inputStyle = TextStyle(
       fontSize: 16,
@@ -131,14 +109,15 @@ class _SetInputRowState extends ConsumerState<SetInputRow> {
     );
 
     return Container(
-      color: set.isCompleted
-          ? scheme.primary.withValues(alpha: 0.1)
-          : null,
+      color: set.isCompleted ? scheme.primary.withValues(alpha: 0.1) : null,
       padding: const EdgeInsets.symmetric(vertical: 3),
       child: Row(
         children: [
           _buildSetCircle(set.setType),
-          _buildPreviousLabel(previousLabel),
+          if (widget.showPrevious)
+            _buildPreviousLabel(widget.previousLabel)
+          else
+            const SizedBox(width: 8),
           if (widget.config.showWeight)
             _buildInputField(
               controller: _weightController,
@@ -199,7 +178,7 @@ class _SetInputRowState extends ConsumerState<SetInputRow> {
               ),
             ),
             child: Text(
-              SetType.indicator(setType, _setNumber),
+              SetType.indicator(setType, widget.setNumber),
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
@@ -261,8 +240,10 @@ class _SetInputRowState extends ConsumerState<SetInputRow> {
           isDense: true,
           hintText: hint,
           hintStyle: const TextStyle(fontSize: 13),
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 6, vertical: 10),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 6,
+            vertical: 10,
+          ),
           border: InputBorder.none,
         ),
       ),
@@ -281,7 +262,7 @@ class _SetInputRowState extends ConsumerState<SetInputRow> {
               ? Theme.of(context).colorScheme.primary
               : AppTheme.surfaceHighest,
         ),
-        onPressed: _toggleComplete,
+        onPressed: widget.onToggleComplete,
       ),
     );
   }

@@ -1,6 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../rank/rank_standards.dart';
+
 class Exercise {
   const Exercise({
     required this.id,
@@ -19,6 +21,9 @@ class Exercise {
   final String? gifUrl;
   final String muscleGroup;
   final String subMuscleGroup;
+
+  /// Cvik ma standard ve Strength Level tabulce, takze se z nej pocita rank.
+  bool get isRanked => rankStandardFor(name) != null;
 
   factory Exercise.fromRow(Map<String, dynamic> row) {
     final sub = row['sub_muscle_groups'] as Map<String, dynamic>?;
@@ -96,6 +101,21 @@ int _freeWeightBonus(Exercise e) {
   return _freeWeightEquipment.any(equipment.contains) ? 15 : 0;
 }
 
+/// Rankovane cviky maji pri hledani prednost.
+///
+/// Bonus je zamerne vyssi nez rozdil mezi shodou v podsvalu (30)
+/// a shodou slova v nazvu (60), aby se pri hledani "biceps" ukazaly
+/// rankovane cviky nahore. Presna shoda nazvu zustava vzdy prvni.
+const int _rankedBonus = 30;
+
+class _ScoredExercise {
+  const _ScoredExercise(this.exercise, this.match, this.weight);
+
+  final Exercise exercise;
+  final int match;
+  final int weight;
+}
+
 List<Exercise> filterExercises(
   List<Exercise> exercises, {
   required String query,
@@ -108,18 +128,31 @@ List<Exercise> filterExercises(
   if (query.trim().isEmpty) return result;
 
   final q = query.trim().toLowerCase();
-  final scored = <MapEntry<Exercise, int>>[];
+  final scored = <_ScoredExercise>[];
   for (final e in result) {
-    final score = _matchScore(e, q);
-    if (score >= 0) {
-      scored.add(MapEntry(e, score + _freeWeightBonus(e)));
-    }
+    final match = _matchScore(e, q);
+    if (match < 0) continue;
+    final weight =
+        match + _freeWeightBonus(e) + (e.isRanked ? _rankedBonus : 0);
+    scored.add(_ScoredExercise(e, match, weight));
   }
   scored.sort((a, b) {
-    if (a.value != b.value) return b.value.compareTo(a.value);
-    final byLength = a.key.name.length.compareTo(b.key.name.length);
+    // Presna shoda nazvu je vzdy prvni, i kdyz je cvik nerankovany.
+    final aExact = a.match == 100;
+    final bExact = b.match == 100;
+    if (aExact != bExact) return aExact ? -1 : 1;
+
+    if (a.weight != b.weight) return b.weight.compareTo(a.weight);
+
+    // Pri stejnem skore drz ranked cviky nahore.
+    if (a.exercise.isRanked != b.exercise.isRanked) {
+      return a.exercise.isRanked ? -1 : 1;
+    }
+
+    final byLength =
+        a.exercise.name.length.compareTo(b.exercise.name.length);
     if (byLength != 0) return byLength;
-    return a.key.name.compareTo(b.key.name);
+    return a.exercise.name.compareTo(b.exercise.name);
   });
-  return scored.map((entry) => entry.key).toList();
+  return scored.map((entry) => entry.exercise).toList();
 }

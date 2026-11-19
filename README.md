@@ -29,6 +29,8 @@ Aplikace poskytuje strukturované sledování tréninkového pokroku, výpočet 
   * `distance_duration`: Kardio cviky měřené na vzdálenost a čas (např. běh).
 * **Vlastní cviky:** Možnost vytvářet uživatelské cviky (`is_custom`) a přiřazovat je k příslušné svalové podskupině. Globální katalog má `user_id = NULL`.
 * **Šablony (Routines):** Předpřipravené tréninkové plány s cílovými váhami a opakováními, lze je jedním tlačítkem spustit jako proběhlý trénink.
+* **Dokončení tréninku:** Po stisku *Finish* se zobrazí souhrn, kde lze ještě upravit název, dobu trvání v minutách a datum a čas začátku.
+* **Úprava uloženého tréninku:** Z historie nebo feedu lze otevřít *Edit* a upravit název, trvání, datum i všechny série (váhy, opakování, typy cviků).
 
 ### 2. Rank systém
 * **Hierarchické hodnocení síly:** Aplikace počítá dosažený rank na třech úrovních:

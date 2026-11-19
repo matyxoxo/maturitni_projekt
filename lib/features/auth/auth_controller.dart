@@ -8,6 +8,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../home/feed_repository.dart';
 import '../home/home_repository.dart';
 import '../profile/profile_repository.dart';
+import '../rank/rank_model.dart';
+import '../rank/rank_repository.dart';
 import '../routines/routines_repository.dart';
 import '../workout/active_workout_provider.dart';
 
@@ -65,12 +67,12 @@ class AuthController extends Notifier<AppAuthStatus> {
     try {
       final row = await _client
           .from('users')
-          .select('username, body_weight_kg')
+          .select('username, body_weight_kg, sex')
           .eq('id', session.user.id)
           .maybeSingle();
       if (row == null) {
         state = AppAuthStatus.needsUsername;
-      } else if (row['body_weight_kg'] == null) {
+      } else if (row['body_weight_kg'] == null || row['sex'] == null) {
         state = AppAuthStatus.needsWeight;
       } else {
         state = AppAuthStatus.ready;
@@ -100,6 +102,7 @@ class AuthController extends Notifier<AppAuthStatus> {
     ref.invalidate(routinesProvider);
     ref.invalidate(routineDetailProvider);
     ref.invalidate(previousWorkoutSetsProvider);
+    ref.invalidate(rankReportProvider);
     // Aktivni workout patri predchozimu uctu.
     ref.read(activeWorkoutProvider.notifier).reset();
   }
@@ -207,23 +210,31 @@ class AuthController extends Notifier<AppAuthStatus> {
     }
   }
 
-  Future<String?> saveBodyWeight(double weightKg) async {
+  /// Uloží váhu těla a pohlaví během onboardingu.
+  ///
+  /// Obojí ovlivňuje rank (tabulky Strength Levelu jsou zvlášť pro muže
+  /// a ženy), takže se ukládá jedním dotazem a rank se hned přepočítá.
+  Future<String?> saveOnboarding({
+    required double weightKg,
+    required RankSex sex,
+  }) async {
     final session = _client.auth.currentSession;
     if (session == null) return 'Not signed in.';
     if (weightKg < 30 || weightKg > 300) {
       return 'Weight must be between 30 and 300 kg.';
     }
     try {
-      await _client
-          .from('users')
-          .update({'body_weight_kg': weightKg})
-          .eq('id', session.user.id);
+      await _client.from('users').update({
+        'body_weight_kg': weightKg,
+        'sex': sex.databaseValue,
+      }).eq('id', session.user.id);
       await refresh();
+      ref.invalidate(rankReportProvider);
       return null;
     } on PostgrestException catch (e) {
       return e.message;
     } catch (_) {
-      return 'Could not save weight. Please try again.';
+      return 'Could not save your details. Please try again.';
     }
   }
 

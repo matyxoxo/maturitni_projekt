@@ -8,8 +8,10 @@ import '../exercises/exercise_picker_screen.dart';
 import '../exercises/exercise_repository.dart';
 import '../home/feed_repository.dart';
 import '../home/home_repository.dart';
+import '../profile/profile_repository.dart';
 import 'active_workout_provider.dart';
 import 'exercise_card.dart';
+import 'finish_workout_screen.dart';
 import 'workout_stats_bar.dart';
 
 /// Obrazovka probihajiciho workoutu.
@@ -48,57 +50,25 @@ class ActiveWorkoutScreen extends ConsumerWidget {
   }
 
   Future<void> _finishWorkout(BuildContext context, WidgetRef ref) async {
-    final workout = ref.read(activeWorkoutProvider);
-    final title = await _askForWorkoutTitle(context);
-    if (title == null || !context.mounted) return;
+    final volume = ref.read(activeWorkoutProvider).totalVolume;
 
-    final error =
-        await ref.read(activeWorkoutProvider.notifier).finish(title);
-    if (!context.mounted) return;
+    // Finish obrazovka je fullscreen nad shellem – uzivatel tu jeste muze
+    // upravit nazev, dobu trvani a cas zacatku, nebo workout zahodit.
+    final result = await Navigator.of(context, rootNavigator: true)
+        .push<FinishWorkoutResult>(
+          MaterialPageRoute(builder: (_) => const FinishWorkoutScreen()),
+        );
+    if (!context.mounted || result == null) return;
 
-    if (error == null) {
+    if (result == FinishWorkoutResult.saved) {
       ref.invalidate(myWorkoutsProvider);
       ref.invalidate(feedProvider);
       ref.invalidate(previousWorkoutSetsProvider);
-      _showSavedMessage(context, workout.totalVolume);
-      context.go('/workout');
-    } else {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(error)));
+      ref.invalidate(profileProvider);
+      ref.invalidate(workoutHistoryProvider);
+      _showSavedMessage(context, volume);
     }
-  }
-
-  /// Zobrazi dialog s nazvem workoutu. Vrati zvoleny nazev nebo null.
-  Future<String?> _askForWorkoutTitle(BuildContext context) {
-    final titleController = TextEditingController(
-      text: 'Workout ${DateTime.now().day}.${DateTime.now().month}.',
-    );
-    return showDialog<String>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Finish workout'),
-        content: TextField(
-          controller: titleController,
-          decoration: const InputDecoration(labelText: 'Workout title'),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(
-              minimumSize: const Size(84, 44),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            onPressed: () => Navigator.pop(dialogContext, titleController.text),
-            child: const Text('Save'),
-          ),
-        ],
-      ),
-    );
+    context.go('/workout');
   }
 
   void _showSavedMessage(BuildContext context, double volumeKg) {
@@ -230,10 +200,7 @@ class _EmptyWorkoutMessage extends StatelessWidget {
 
 /// Seznam cviku + tlacitko "Discard workout" na konci.
 class _ExerciseList extends StatelessWidget {
-  const _ExerciseList({
-    required this.exerciseCount,
-    required this.onDiscard,
-  });
+  const _ExerciseList({required this.exerciseCount, required this.onDiscard});
 
   final int exerciseCount;
   final VoidCallback onDiscard;
@@ -254,9 +221,7 @@ class _ExerciseList extends StatelessWidget {
               minimumSize: const Size.fromHeight(48),
               foregroundColor: AppTheme.danger,
               backgroundColor: AppTheme.danger.withValues(alpha: 0.07),
-              side: BorderSide(
-                color: AppTheme.danger.withValues(alpha: 0.35),
-              ),
+              side: BorderSide(color: AppTheme.danger.withValues(alpha: 0.35)),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(14),
               ),

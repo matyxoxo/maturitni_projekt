@@ -1,6 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../rank/rank_model.dart';
+
 // ============================================================
 //  Zakladni data profilu
 // ============================================================
@@ -18,6 +20,7 @@ class ProfileData {
     required this.totalVolumeKg,
     required this.avgDurationSeconds,
     required this.lastWorkoutAt,
+    this.sex,
   });
 
   final String username;
@@ -25,6 +28,9 @@ class ProfileData {
   final double? bodyWeightKg;
   final String? profilePhotoUrl;
   final String? fullName;
+
+  /// Pohlaví pro výběr tabulky standardů; `null` = nevyplněno.
+  final RankSex? sex;
   final DateTime memberSince;
   final int workoutCount;
   final double totalVolumeKg;
@@ -44,7 +50,7 @@ final profileProvider =
   final userRow = await client
       .from('users')
       .select(
-        'username, email, body_weight_kg, profile_photo_url, full_name, created_at',
+        'username, email, body_weight_kg, sex, profile_photo_url, full_name, created_at',
       )
       .eq('id', userId)
       .single();
@@ -83,6 +89,11 @@ final profileProvider =
     username: userRow['username'] as String,
     email: userRow['email'] as String,
     bodyWeightKg: (userRow['body_weight_kg'] as num?)?.toDouble(),
+    sex: switch (userRow['sex'] as String?) {
+      'male' => RankSex.male,
+      'female' => RankSex.female,
+      _ => null,
+    },
     profilePhotoUrl: userRow['profile_photo_url'] as String?,
     fullName: userRow['full_name'] as String?,
     memberSince: DateTime.parse(userRow['created_at'] as String),
@@ -468,6 +479,7 @@ class PublicUser {
 Future<String?> updateProfile({
   String? username,
   double? bodyWeightKg,
+  RankSex? sex,
   String? fullName,
   String? profilePhotoUrl,
 }) async {
@@ -478,6 +490,7 @@ Future<String?> updateProfile({
   final updates = <String, dynamic>{};
   if (username != null) updates['username'] = username;
   if (bodyWeightKg != null) updates['body_weight_kg'] = bodyWeightKg;
+  if (sex != null) updates['sex'] = sex.databaseValue;
   if (fullName != null) updates['full_name'] = fullName;
   if (profilePhotoUrl != null) updates['profile_photo_url'] = profilePhotoUrl;
   if (updates.isEmpty) return null;

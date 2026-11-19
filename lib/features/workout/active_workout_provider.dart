@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../exercises/exercise_repository.dart';
+import '../rank/rank_repository.dart';
 import '../routines/routines_repository.dart';
 
 // ============================================================
@@ -105,8 +106,8 @@ class ActiveWorkout {
 /// Stav probihajiciho workoutu. Jeden globalni instance – preziva celej session.
 final activeWorkoutProvider =
     NotifierProvider<ActiveWorkoutController, ActiveWorkout>(
-  ActiveWorkoutController.new,
-);
+      ActiveWorkoutController.new,
+    );
 
 /// Kazdou vterinu vydaji aktualni cas (pro odectenou dobu workoutu).
 final workoutClockProvider = StreamProvider<DateTime>((ref) {
@@ -195,8 +196,9 @@ class ActiveWorkoutController extends Notifier<ActiveWorkout> {
   }
 
   void setSetType(int exerciseIndex, int setIndex, String setType) {
-    _updateState((exercises) =>
-        exercises[exerciseIndex].sets[setIndex].setType = setType);
+    _updateState(
+      (exercises) => exercises[exerciseIndex].sets[setIndex].setType = setType,
+    );
   }
 
   void toggleSetComplete(int exerciseIndex, int setIndex) {
@@ -208,7 +210,8 @@ class ActiveWorkoutController extends Notifier<ActiveWorkout> {
 
   void removeSet(int exerciseIndex, int setIndex) {
     _updateState(
-        (exercises) => exercises[exerciseIndex].sets.removeAt(setIndex));
+      (exercises) => exercises[exerciseIndex].sets.removeAt(setIndex),
+    );
   }
 
   // ---------- Minimizace ----------
@@ -274,20 +277,26 @@ class ActiveWorkoutController extends Notifier<ActiveWorkout> {
   }
 
   /// Ulozi workout do DB a vrati null pri uspechu, jinak chybovou hlasku.
-  Future<String?> finish(String title) async {
+  ///
+  /// [durationSeconds] a [startedAt] urcuje uzivatel na finish obrazovce
+  /// (muze si je upravit).
+  Future<String?> finish({
+    required String title,
+    required int durationSeconds,
+    required DateTime startedAt,
+  }) async {
     final client = Supabase.instance.client;
     final userId = client.auth.currentUser?.id;
     if (userId == null) return 'Not signed in.';
     if (state.isEmpty) return 'Add at least one exercise.';
 
     try {
-      final duration =
-          DateTime.now().difference(state.startedAt).inSeconds;
       final workoutId = await _saveWorkoutRow(
         client,
         userId,
         title,
-        duration,
+        durationSeconds,
+        startedAt,
       );
 
       for (var i = 0; i < state.exercises.length; i++) {
@@ -295,6 +304,7 @@ class ActiveWorkoutController extends Notifier<ActiveWorkout> {
       }
 
       reset();
+      ref.invalidate(rankReportProvider);
       return null;
     } on PostgrestException catch (e) {
       return e.message;
@@ -310,6 +320,7 @@ class ActiveWorkoutController extends Notifier<ActiveWorkout> {
     String userId,
     String title,
     int durationSeconds,
+    DateTime startedAt,
   ) async {
     final row = await client
         .from('workouts')
@@ -317,6 +328,8 @@ class ActiveWorkoutController extends Notifier<ActiveWorkout> {
           'user_id': userId,
           'workout_title': title,
           'duration_seconds': durationSeconds,
+          // Datum a cas, kdy workout zacal (uzivatel ho muze zmenit).
+          'created_at': startedAt.toUtc().toIso8601String(),
         })
         .select('workout_id')
         .single();
@@ -386,40 +399,44 @@ class ActiveWorkoutController extends Notifier<ActiveWorkout> {
 /// exerciseId -> (setNumber -> "20kg x 10") z posledniho ulozeneho workoutu.
 final previousWorkoutSetsProvider =
     FutureProvider<Map<String, Map<int, String>>>((ref) async {
-  final client = Supabase.instance.client;
-  final userId = client.auth.currentUser?.id;
-  if (userId == null) return {};
+      final client = Supabase.instance.client;
+      final userId = client.auth.currentUser?.id;
+      if (userId == null) return {};
 
-  final lastWorkout = await client
-      .from('workouts')
-      .select('workout_id')
-      .eq('user_id', userId)
-      .order('created_at', ascending: false)
-      .limit(1)
-      .maybeSingle();
-  if (lastWorkout == null) return {};
+      final lastWorkout = await client
+          .from('workouts')
+          .select('workout_id')
+          .eq('user_id', userId)
+          .order('created_at', ascending: false)
+          .limit(1)
+          .maybeSingle();
+      if (lastWorkout == null) return {};
 
-  final rows = await client.from('workout_sets').select('''
+      final rows = await client
+          .from('workout_sets')
+          .select('''
         set_number, weight_kg, reps_count,
         workout_exercises!inner(exercise_id, workout_id)
-      ''').eq('workout_exercises.workout_id', lastWorkout['workout_id']);
+      ''')
+          .eq('workout_exercises.workout_id', lastWorkout['workout_id']);
 
-  final result = <String, Map<int, String>>{};
-  for (final row in rows) {
-    final exercise = row['workout_exercises'];
-    final exerciseId =
-        exercise is Map ? exercise['exercise_id'] as String? : null;
-    if (exerciseId == null) continue;
-    final setNumber = row['set_number'] as int;
-    final label = _formatPreviousSetLabel(
-      row['weight_kg'] as num?,
-      row['reps_count'] as int?,
-    );
-    if (label.isEmpty) continue;
-    result.putIfAbsent(exerciseId, () => {})[setNumber] = label;
-  }
-  return result;
-});
+      final result = <String, Map<int, String>>{};
+      for (final row in rows) {
+        final exercise = row['workout_exercises'];
+        final exerciseId = exercise is Map
+            ? exercise['exercise_id'] as String?
+            : null;
+        if (exerciseId == null) continue;
+        final setNumber = row['set_number'] as int;
+        final label = _formatPreviousSetLabel(
+          row['weight_kg'] as num?,
+          row['reps_count'] as int?,
+        );
+        if (label.isEmpty) continue;
+        result.putIfAbsent(exerciseId, () => {})[setNumber] = label;
+      }
+      return result;
+    });
 
 /// Vytvori popisek "20kg x 10" pro zobrazeni minule hodnoty.
 String _formatPreviousSetLabel(num? weightKg, int? reps) {

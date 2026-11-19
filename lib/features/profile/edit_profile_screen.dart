@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/theme.dart';
+import '../rank/rank_model.dart';
+import '../rank/rank_repository.dart';
+import '../rank/rank_widgets.dart';
 import 'profile_repository.dart';
 
 /// Uprava udaju profilu (jmeno, vaha, cele jmeno, fotka URL).
@@ -20,6 +23,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   late final TextEditingController _fullNameController;
   late final TextEditingController _weightController;
   late final TextEditingController _photoUrlController;
+  RankSex? _sex;
   bool _loading = false;
   bool _initialized = false;
 
@@ -49,6 +53,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     _weightController.text =
         profile.bodyWeightKg != null ? '${profile.bodyWeightKg}' : '';
     _photoUrlController.text = profile.profilePhotoUrl ?? '';
+    _sex = profile.sex;
   }
 
   Future<void> _save(ProfileData profile) async {
@@ -75,6 +80,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     final error = await updateProfile(
       username: username != profile.username ? username : null,
       bodyWeightKg: weight != profile.bodyWeightKg ? weight : null,
+      sex: _sex != profile.sex ? _sex : null,
       fullName: fullName != (profile.fullName ?? '') ? fullName : null,
       profilePhotoUrl: photoUrl != (profile.profilePhotoUrl ?? '')
           ? photoUrl
@@ -89,6 +95,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       return;
     }
     ref.invalidate(profileProvider);
+    ref.invalidate(rankReportProvider);
     Navigator.of(context).pop();
   }
 
@@ -194,7 +201,32 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                     prefixIcon: Icon(Icons.monitor_weight_outlined),
                   ),
                 ),
-                const SizedBox(height: 14),
+                const SizedBox(height: 18),
+                const Text(
+                  'STANDARDS',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 1.1,
+                    color: AppTheme.textMuted,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                RankSexSelector(
+                  value: _sex,
+                  onChanged: (sex) => setState(() => _sex = sex),
+                ),
+                const SizedBox(height: 6),
+                const Text(
+                  'Picks the men\'s or women\'s Strength Level table used for '
+                  'your ranks.',
+                  style: TextStyle(
+                    fontSize: 11,
+                    height: 1.4,
+                    color: AppTheme.textMuted,
+                  ),
+                ),
+                const SizedBox(height: 18),
                 TextFormField(
                   controller: _photoUrlController,
                   keyboardType: TextInputType.url,

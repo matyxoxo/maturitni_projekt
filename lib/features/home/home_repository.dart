@@ -51,9 +51,11 @@ class WorkoutSummary {
     final exerciseRows =
         (row['workout_exercises'] as List<dynamic>? ?? [])
             .cast<Map<String, dynamic>>()
-          ..sort((a, b) =>
-              (a['order_index'] as int? ?? 0)
-                  .compareTo(b['order_index'] as int? ?? 0));
+          ..sort(
+            (a, b) => (a['order_index'] as int? ?? 0).compareTo(
+              b['order_index'] as int? ?? 0,
+            ),
+          );
     final exercises = <WorkoutExerciseBrief>[];
     var volume = 0.0;
     for (final ex in exerciseRows) {
@@ -92,7 +94,9 @@ class WorkoutSummary {
 final myWorkoutsProvider = FutureProvider<List<WorkoutSummary>>((ref) async {
   final userId = Supabase.instance.client.auth.currentUser?.id;
   if (userId == null) return [];
-  final rows = await Supabase.instance.client.from('workouts').select('''
+  final rows = await Supabase.instance.client
+      .from('workouts')
+      .select('''
         workout_id, workout_title, created_at, duration_seconds,
         users (username, profile_photo_url),
         workout_exercises (
@@ -100,7 +104,10 @@ final myWorkoutsProvider = FutureProvider<List<WorkoutSummary>>((ref) async {
           exercises (exercise_id, exercise_name, exercise_icon_url),
           workout_sets (weight_kg, reps_count)
         )
-      ''').eq('user_id', userId).order('created_at', ascending: false).limit(50);
+      ''')
+      .eq('user_id', userId)
+      .order('created_at', ascending: false)
+      .limit(50);
   return rows.map(WorkoutSummary.fromRow).toList();
 });
 
@@ -145,15 +152,23 @@ class WorkoutSetDetail {
 class WorkoutDetailExercise {
   const WorkoutDetailExercise({
     required this.orderIndex,
+    required this.exerciseId,
     required this.name,
     required this.exerciseType,
+    required this.muscleGroup,
+    required this.subMuscleGroup,
+    required this.equipment,
     required this.gifUrl,
     required this.sets,
   });
 
   final int orderIndex;
+  final String exerciseId;
   final String name;
   final String exerciseType;
+  final String muscleGroup;
+  final String subMuscleGroup;
+  final String? equipment;
   final String? gifUrl;
   final List<WorkoutSetDetail> sets;
 }
@@ -195,17 +210,26 @@ class WorkoutDetail {
 
   factory WorkoutDetail.fromRow(Map<String, dynamic> row) {
     final user = row['users'] as Map<String, dynamic>?;
-    final exerciseRows =
-        (row['workout_exercises'] as List<dynamic>? ?? [])
-            .cast<Map<String, dynamic>>();
+    final exerciseRows = (row['workout_exercises'] as List<dynamic>? ?? [])
+        .cast<Map<String, dynamic>>();
     final exercises = [
       for (final ex in exerciseRows)
         if (ex['exercises'] != null)
           WorkoutDetailExercise(
             orderIndex: ex['order_index'] as int? ?? 0,
+            exerciseId: ex['exercises']['exercise_id'] as String,
             name: ex['exercises']['exercise_name'] as String,
             exerciseType:
                 ex['exercises']['exercise_type'] as String? ?? 'weight_reps',
+            muscleGroup:
+                ex['exercises']['sub_muscle_groups']?['muscle_groups']?['muscle_group_name']
+                    as String? ??
+                '',
+            subMuscleGroup:
+                ex['exercises']['sub_muscle_groups']?['sub_muscle_name']
+                    as String? ??
+                '',
+            equipment: ex['exercises']['equipment'] as String?,
             gifUrl: ex['exercises']['exercise_icon_url'] as String?,
             sets: [
               for (final set
@@ -229,8 +253,10 @@ class WorkoutDetail {
 }
 
 /// Detail jednoho workoutu podle jeho id.
-final workoutDetailProvider =
-    FutureProvider.family<WorkoutDetail, String>((ref, workoutId) async {
+final workoutDetailProvider = FutureProvider.family<WorkoutDetail, String>((
+  ref,
+  workoutId,
+) async {
   final row = await Supabase.instance.client
       .from('workouts')
       .select('''
@@ -238,7 +264,13 @@ final workoutDetailProvider =
         users (id, username, profile_photo_url),
         workout_exercises (
           order_index,
-          exercises (exercise_name, exercise_type, exercise_icon_url),
+          exercises (
+            exercise_id, exercise_name, exercise_type, exercise_icon_url,
+            equipment,
+            sub_muscle_groups (
+              sub_muscle_name, muscle_groups (muscle_group_name)
+            )
+          ),
           workout_sets (
             set_number, weight_kg, reps_count, duration_seconds,
             distance_meters, set_type, is_completed

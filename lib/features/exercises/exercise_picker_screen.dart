@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme.dart';
 import '../../core/widgets/exercise_thumbnail.dart';
+import '../../core/widgets/ranked_tag.dart';
 import 'exercise_repository.dart';
 
 class ExercisePickerScreen extends ConsumerStatefulWidget {
@@ -188,14 +189,24 @@ class _ExerciseTile extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        exercise.name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                        ),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              exercise.name,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                          if (exercise.isRanked) ...[
+                            const SizedBox(width: 8),
+                            const RankedTag(),
+                          ],
+                        ],
                       ),
                       const SizedBox(height: 3),
                       Text(

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme.dart';
+import '../../core/widgets/ranked_tag.dart';
 import 'exercise_repository.dart';
 
 /// Prohlizec vsech cviku (jen pro zobrazeni, ne vyber).
@@ -187,14 +188,24 @@ class _ExerciseTile extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        exercise.name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                        ),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              exercise.name,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                          if (exercise.isRanked) ...[
+                            const SizedBox(width: 8),
+                            const RankedTag(),
+                          ],
+                        ],
                       ),
                       const SizedBox(height: 3),
                       Text(
@@ -292,13 +303,23 @@ class _ExerciseTile extends StatelessWidget {
                   : const SizedBox(height: 80),
             ),
             const SizedBox(height: 18),
-            Text(
-              exercise.name,
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w800,
-                letterSpacing: -0.4,
-              ),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    exercise.name,
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: -0.4,
+                    ),
+                  ),
+                ),
+                if (exercise.isRanked) ...[
+                  const SizedBox(width: 10),
+                  const RankedTag(),
+                ],
+              ],
             ),
             const SizedBox(height: 12),
             _DetailRow(label: 'Muscle group', value: exercise.muscleGroup),

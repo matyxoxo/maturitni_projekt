@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/exercise_types.dart';
 import '../../core/format.dart';
@@ -16,8 +17,7 @@ class WorkoutDetailScreen extends ConsumerWidget {
   final String workoutId;
 
   Future<void> _toggleLike(BuildContext context, WidgetRef ref) async {
-    final engagement =
-        ref.read(workoutEngagementProvider(workoutId)).value;
+    final engagement = ref.read(workoutEngagementProvider(workoutId)).value;
     if (engagement == null) return;
 
     final overrides = ref.read(likeOverridesProvider.notifier);
@@ -33,9 +33,9 @@ class WorkoutDetailScreen extends ConsumerWidget {
     if (!ok) {
       overrides.rollback(workoutId, previous);
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not update like.')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Could not update like.')));
       }
     }
   }
@@ -45,9 +45,22 @@ class WorkoutDetailScreen extends ConsumerWidget {
     final detailAsync = ref.watch(workoutDetailProvider(workoutId));
     final engagementAsync = ref.watch(workoutEngagementProvider(workoutId));
     final overrides = ref.watch(likeOverridesProvider);
+    final currentUserId = Supabase.instance.client.auth.currentUser?.id;
+    final canEdit =
+        currentUserId != null && detailAsync.value?.userId == currentUserId;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Workout')),
+      appBar: AppBar(
+        title: const Text('Workout'),
+        actions: [
+          if (canEdit)
+            IconButton(
+              icon: const Icon(Icons.edit_outlined),
+              tooltip: 'Edit workout',
+              onPressed: () => context.push('/history/$workoutId/edit'),
+            ),
+        ],
+      ),
       body: detailAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (err, _) => Center(child: Text('Error: $err')),
@@ -70,8 +83,7 @@ class WorkoutDetailScreen extends ConsumerWidget {
                     ),
                     child: CircleAvatar(
                       radius: 18,
-                      backgroundColor:
-                          AppTheme.avatarColor(detail.username),
+                      backgroundColor: AppTheme.avatarColor(detail.username),
                       child: Text(
                         detail.username.isEmpty
                             ? '?'
@@ -150,10 +162,7 @@ class WorkoutDetailScreen extends ConsumerWidget {
               engagementAsync: engagementAsync,
               overrides: overrides,
               onLike: () => _toggleLike(context, ref),
-              onComments: () => showCommentSheet(
-                context,
-                workoutId: workoutId,
-              ),
+              onComments: () => showCommentSheet(context, workoutId: workoutId),
             ),
             const SizedBox(height: 14),
             const Divider(),
@@ -178,6 +187,7 @@ class _StatPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      constraints: const BoxConstraints(maxWidth: 240),
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.045),
@@ -189,12 +199,16 @@ class _StatPill extends StatelessWidget {
         children: [
           Icon(icon, size: 14, color: AppTheme.accentBright),
           const SizedBox(width: 5),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 12.5,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFFDDE6F5),
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFFDDE6F5),
+              ),
             ),
           ),
         ],
@@ -227,9 +241,8 @@ class _EngagementRow extends StatelessWidget {
     }
 
     final liked = overrides[workoutId] ?? engagement.likedByMe;
-    final likeCount = engagement.likeCount -
-        (engagement.likedByMe ? 1 : 0) +
-        (liked ? 1 : 0);
+    final likeCount =
+        engagement.likeCount - (engagement.likedByMe ? 1 : 0) + (liked ? 1 : 0);
 
     return Row(
       children: [
@@ -469,9 +482,7 @@ class _SetDetailRow extends StatelessWidget {
               width: 64,
               child: Center(
                 child: Text(
-                  set.durationSeconds != null
-                      ? '${set.durationSeconds}s'
-                      : '–',
+                  set.durationSeconds != null ? '${set.durationSeconds}s' : '–',
                   style: const TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
@@ -484,9 +495,7 @@ class _SetDetailRow extends StatelessWidget {
               width: 64,
               child: Center(
                 child: Text(
-                  set.distanceMeters != null
-                      ? '${set.distanceMeters}m'
-                      : '–',
+                  set.distanceMeters != null ? '${set.distanceMeters}m' : '–',
                   style: const TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
@@ -498,9 +507,7 @@ class _SetDetailRow extends StatelessWidget {
           SizedBox(
             width: 40,
             child: Icon(
-              set.isCompleted
-                  ? Icons.check_circle
-                  : Icons.check_circle_outline,
+              set.isCompleted ? Icons.check_circle : Icons.check_circle_outline,
               size: 22,
               color: set.isCompleted
                   ? Theme.of(context).colorScheme.primary

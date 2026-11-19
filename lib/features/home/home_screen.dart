@@ -114,48 +114,8 @@ class FeedWorkoutCard extends ConsumerWidget {
     ref.invalidate(userFeedProvider);
   }
 
-  Future<void> _renameWorkout(BuildContext context, WidgetRef ref) async {
-    final controller = TextEditingController(text: workout.title);
-    final newName = await showDialog<String>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Rename workout'),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          decoration: const InputDecoration(labelText: 'Workout title'),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(
-              minimumSize: const Size(84, 44),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            onPressed: () => Navigator.pop(dialogContext, controller.text),
-            child: const Text('Save'),
-          ),
-        ],
-      ),
-    );
-    if (newName == null || newName.trim().isEmpty) return;
-    try {
-      await Supabase.instance.client
-          .from('workouts')
-          .update({'workout_title': newName.trim()})
-          .eq('workout_id', workout.workoutId);
-      _invalidateFeeds(ref);
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Rename failed: $e')));
-      }
-    }
+  void _editWorkout(BuildContext context) {
+    context.push('/history/${workout.workoutId}/edit');
   }
 
   Future<void> _deleteWorkout(BuildContext context, WidgetRef ref) async {
@@ -182,10 +142,7 @@ class FeedWorkoutCard extends ConsumerWidget {
 
   Future<void> _toggleLike(BuildContext context, WidgetRef ref) async {
     final overrides = ref.read(likeOverridesProvider.notifier);
-    final previous = resolveLiked(
-      ref.read(likeOverridesProvider),
-      workout,
-    );
+    final previous = resolveLiked(ref.read(likeOverridesProvider), workout);
     final next = !previous;
     // Optimistic – okamzita zmena, pri neuspechu vratime.
     overrides.set(workout.workoutId, next);
@@ -194,9 +151,9 @@ class FeedWorkoutCard extends ConsumerWidget {
     if (!ok) {
       overrides.rollback(workout.workoutId, previous);
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not update like.')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Could not update like.')));
       }
     }
   }
@@ -230,11 +187,8 @@ class FeedWorkoutCard extends ConsumerWidget {
                 username: workout.username,
                 photoUrl: workout.profilePhotoUrl,
                 createdAt: workout.createdAt,
-                onRename: isMine
-                    ? () => _renameWorkout(context, ref)
-                    : null,
-                onDelete:
-                    isMine ? () => _deleteWorkout(context, ref) : null,
+                onEdit: isMine ? () => _editWorkout(context) : null,
+                onDelete: isMine ? () => _deleteWorkout(context, ref) : null,
               ),
               const SizedBox(height: 14),
               Text(
@@ -292,7 +246,7 @@ class _CardHeader extends StatelessWidget {
     required this.username,
     required this.photoUrl,
     required this.createdAt,
-    required this.onRename,
+    required this.onEdit,
     required this.onDelete,
   });
 
@@ -300,12 +254,12 @@ class _CardHeader extends StatelessWidget {
   final String username;
   final String? photoUrl;
   final DateTime createdAt;
-  final VoidCallback? onRename;
+  final VoidCallback? onEdit;
   final VoidCallback? onDelete;
 
   @override
   Widget build(BuildContext context) {
-    final canEdit = onRename != null && onDelete != null;
+    final canEdit = onEdit != null && onDelete != null;
 
     return Row(
       children: [
@@ -348,12 +302,12 @@ class _CardHeader extends StatelessWidget {
             padding: EdgeInsets.zero,
             splashRadius: 20,
             onSelected: (value) {
-              if (value == 'rename') onRename!();
+              if (value == 'edit') onEdit!();
               if (value == 'delete') onDelete!();
             },
             itemBuilder: (_) => const [
               PopupMenuItem(
-                value: 'rename',
+                value: 'edit',
                 child: ListTile(
                   leading: Icon(Icons.edit_outlined),
                   title: Text('Edit'),
@@ -377,11 +331,7 @@ class _CardHeader extends StatelessWidget {
 
 /// Kruhovy avatar s inicialy nebo fotkou (klik -> profil).
 class _Avatar extends StatelessWidget {
-  const _Avatar({
-    required this.username,
-    required this.userId,
-    this.photoUrl,
-  });
+  const _Avatar({required this.username, required this.userId, this.photoUrl});
 
   final String username;
   final String userId;
